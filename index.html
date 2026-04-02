@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#020617">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <title>BioWorkbench | Academic Submission</title>
     <style>
         /* --- CORE ARCHITECTURE & THEME --- */
@@ -27,13 +28,24 @@
         .submission-badge strong { color: var(--primary); display: block; font-size: 0.85rem; }
         .submission-badge span { color: var(--text-muted); }
 
-        /* --- CONTROL PANEL --- */
-        .control-panel { background: var(--bg-surface); padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 10px; z-index: 90; }
-        input[type="text"] { flex: 1; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-mono); font-size: 14px; transition: var(--transition); }
+        /* --- CONTROL PANEL & AUTOCOMPLETE --- */
+        .control-panel { background: var(--bg-surface); padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 10px; z-index: 90; position: relative; }
+        
+        .search-wrapper { flex: 1; position: relative; }
+        input[type="text"] { width: 100%; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-sans); font-size: 14px; transition: var(--transition); }
         input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
-        .btn { padding: 12px 24px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        .btn { padding: 12px 24px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;}
         .btn:hover { background: #0ea5e9; transform: translateY(-1px); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        /* NEW: Autocomplete Dropdown */
+        .autocomplete-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000; overflow: hidden; display: none; max-height: 300px; overflow-y: auto; }
+        .hint-item { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; transition: background 0.2s; }
+        .hint-item:hover { background: rgba(56, 189, 248, 0.1); }
+        .hint-id { font-family: var(--font-mono); color: var(--primary); font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; }
+        .hint-title { font-size: 0.85rem; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .hint-loading { padding: 12px; text-align: center; color: var(--text-muted); font-size: 0.85rem; font-style: italic; }
 
         /* --- NAVIGATION --- */
         .nav-wrapper { background: var(--bg-surface); border-bottom: 1px solid var(--border); overflow-x: auto; white-space: nowrap; }
@@ -51,30 +63,35 @@
         .section-desc { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.5rem; line-height: 1.5; }
 
         /* --- CARDS & GRIDS --- */
-        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 1rem;}
         .card-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; }
-        .card-value { font-size: 1.75rem; font-weight: 800; color: var(--primary); margin-top: 0.5rem; font-family: var(--font-mono); }
+        .card-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-top: 0.5rem; font-family: var(--font-mono); }
 
         /* --- TABLES & DATA VISUALIZATION --- */
         .table-container { overflow-x: auto; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; }
-        table { width: 100%; border-collapse: collapse; min-width: 600px; text-align: left; }
-        th, td { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
-        th { background: rgba(0,0,0,0.2); color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
+        table { width: 100%; border-collapse: collapse; min-width: 500px; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+        th { background: rgba(0,0,0,0.2); color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; }
         tr:hover td { background: rgba(255,255,255,0.02); }
         .mono { font-family: var(--font-mono); }
 
-        /* Sequence Viewer Box */
-        .seq-box { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: var(--font-mono); font-size: 12px; color: var(--secondary); max-height: 300px; overflow-y: auto; word-break: break-all; line-height: 1.6; }
-        .highlight-cg { background: rgba(52, 211, 153, 0.3); color: #fff; padding: 0 2px; border-radius: 2px; }
+        .seq-box { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: var(--font-mono); font-size: 11px; color: var(--secondary); max-height: 250px; overflow-y: auto; word-break: break-all; line-height: 1.6; }
+        
+        /* New Literature UI */
+        .paper-item { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .paper-item:last-child { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
+        .paper-title { color: var(--primary); font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
+        .paper-meta { color: var(--text-muted); font-size: 0.8rem; }
 
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Mobile Adjustments */
         @media (max-width: 600px) {
             .academic-header { flex-direction: column; align-items: flex-start; gap: 10px; }
             .submission-badge { text-align: left; width: 100%; }
             .control-panel { flex-direction: column; }
+            .btn { width: 100%; }
+            main { padding: 1rem; }
         }
     </style>
 </head>
@@ -82,18 +99,23 @@
 
     <header class="academic-header">
         <div class="branding">
-            <h1>Assignment</h1>
-            <div id="systemStatus" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Colledge work</div>
+            <h1>BioWorkbench Pro</h1>
+            <div id="systemStatus" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">System Ready</div>
         </div>
         <div class="submission-badge">
-            <strong>Sahil Setia</strong>
-            <span>B.Tech 2nd Year(GROUP:VI) | Submitted to: Mr. Pranshu Dangwal</span>
+            <strong>Dev: Sahil Setia</strong>
+            <span>B.Tech 2nd Year | Submitted to: Mr. Pranshu Dangwal</span>
         </div>
     </header>
 
     <div class="control-panel">
-        <input type="text" id="accessionInput" placeholder="Enter NCBI Accession (e.g., NC_002377)" value="NC_002377">
-        <button id="runBtn" class="btn" onclick="bioApp.runPipeline()">Execute Pipeline</button>
+        <div class="search-wrapper">
+            <input type="text" id="accessionInput" placeholder="Search by Accession ID or Organism Name (e.g. Human TP53)" autocomplete="off" oninput="bioApp.debounceHints(this.value)">
+            
+            <div id="autocompleteBox" class="autocomplete-dropdown">
+                </div>
+        </div>
+        <button id="runBtn" class="btn" onclick="bioApp.runPipeline()">Analyze</button>
     </div>
 
     <div class="nav-wrapper">
@@ -101,7 +123,8 @@
             <div class="nav-item active" onclick="bioApp.switchTab('dashboard', this)">Overview</div>
             <div class="nav-item" onclick="bioApp.switchTab('dogma', this)">Central Dogma</div>
             <div class="nav-item" onclick="bioApp.switchTab('epigenetics', this)">Epigenetics</div>
-            <div class="nav-item" onclick="bioApp.switchTab('tools', this)">Lab Thermodynamics</div>
+            <div class="nav-item" onclick="bioApp.switchTab('tools', this)">Thermodynamics</div>
+            <div class="nav-item" onclick="bioApp.switchTab('literature', this)">📚 Literature</div>
         </div>
     </div>
 
@@ -121,54 +144,39 @@
             <div class="card">
                 <div class="card-label" style="margin-bottom: 10px;">NCBI Record Metadata</div>
                 <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.8;">
+                    <div><strong style="color: white;">Accession ID:</strong> <span id="meta-acc" class="mono">---</span></div>
                     <div><strong style="color: white;">Definition:</strong> <span id="meta-def">---</span></div>
                     <div><strong style="color: white;">Organism:</strong> <span id="meta-org">---</span></div>
-                    <div><strong style="color: white;">Database Update:</strong> <span id="meta-date">---</span></div>
+                    <div><strong style="color: white;">Update Date:</strong> <span id="meta-date">---</span></div>
                 </div>
             </div>
         </div>
 
         <div id="view-dogma" class="view">
             <h2 class="section-title">Central Dogma Engine</h2>
-            <p class="section-desc">In-silico transcription of DNA to mRNA, and translation to Polypeptides including biophysical weight estimation.</p>
-
+            <p class="section-desc">In-silico transcription to mRNA and translation to Polypeptides.</p>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Gene ID</th><th>Coordinates</th><th>Protein Length</th><th>Est. Mol. Weight</th></tr></thead>
+                    <thead><tr><th>Gene ID</th><th>Coordinates</th><th>Protein Length</th><th>Est. Mass</th></tr></thead>
                     <tbody id="orfTable"><tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Run pipeline to compute...</td></tr></tbody>
                 </table>
-            </div>
-
-            <div class="card" style="margin-bottom: 1rem;">
-                <div class="card-label" style="margin-bottom: 10px;">Raw mRNA Transcript (Top 2000 bases)</div>
-                <div id="mrnaViewer" class="seq-box" style="color: var(--warning);">Awaiting sequence...</div>
             </div>
         </div>
 
         <div id="view-epigenetics" class="view">
             <h2 class="section-title">Epigenetic CpG Mapper</h2>
-            <p class="section-desc">Identifies Cytosine-Guanine dinucleotide clusters often associated with promoter regions and DNA methylation.</p>
-            
+            <p class="section-desc">Identifies Cytosine-Guanine dinucleotide clusters for methylation prediction.</p>
             <div class="table-container">
                 <table>
-                    <thead><tr><th>Island #</th><th>Start Position</th><th>End Position</th><th>Length (bp)</th><th>CG Density</th></tr></thead>
-                    <tbody id="cpgTable"><tr><td colspan="5" style="text-align: center; color: var(--text-muted);">Run pipeline to map islands...</td></tr></tbody>
+                    <thead><tr><th>Island #</th><th>Start (bp)</th><th>End (bp)</th><th>Density</th></tr></thead>
+                    <tbody id="cpgTable"><tr><td colspan="4" style="text-align: center; color: var(--text-muted);">Run pipeline to map islands...</td></tr></tbody>
                 </table>
             </div>
-
-            <h2 class="section-title" style="margin-top: 2rem;">Custom Motif Scanner</h2>
-            <p class="section-desc">Find exact tandem repeats or promoter motifs in the sequence.</p>
-            <div style="display: flex; gap: 10px; margin-bottom: 1rem;">
-                <input type="text" id="motifInput" placeholder="Enter sequence (e.g., TATAWAW)" style="max-width: 300px;">
-                <button class="btn" onclick="bioApp.scanMotif()">Scan</button>
-            </div>
-            <div id="motifResults" class="seq-box" style="color: var(--text-main);">Results will appear here...</div>
         </div>
 
         <div id="view-tools" class="view">
             <h2 class="section-title">Oligo Thermodynamics</h2>
-            <p class="section-desc">Extracts terminal sequences of detected genes and calculates nearest-neighbor Melting Temperature (Tm) for PCR primers.</p>
-
+            <p class="section-desc">Extracts terminal sequences and calculates Melting Temperature (Tm) for PCR primers.</p>
             <select id="primerSelect" style="width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: white; margin-bottom: 1.5rem;" onchange="bioApp.calculatePrimers()">
                 <option value="">-- Select Gene Target --</option>
             </select>
@@ -178,39 +186,36 @@
                     <div class="card-label" style="color: var(--primary);">Forward Primer (5' → 3')</div>
                     <div id="fwdSeq" class="mono" style="font-size: 1.1rem; margin: 10px 0;">---</div>
                     <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;">
-                        <span>Length: 20bp</span>
-                        <span id="fwdGc">GC: 0%</span>
-                        <strong id="fwdTm" style="color: var(--warning);">Tm: 0°C</strong>
+                        <span>Len: 20bp</span><span id="fwdGc">GC: 0%</span><strong id="fwdTm" style="color: var(--warning);">Tm: 0°C</strong>
                     </div>
                 </div>
-                
                 <div class="card" style="border-left: 4px solid var(--success);">
                     <div class="card-label" style="color: var(--success);">Reverse Primer (5' → 3')</div>
                     <div id="revSeq" class="mono" style="font-size: 1.1rem; margin: 10px 0;">---</div>
                     <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;">
-                        <span>Length: 20bp</span>
-                        <span id="revGc">GC: 0%</span>
-                        <strong id="revTm" style="color: var(--warning);">Tm: 0°C</strong>
+                        <span>Len: 20bp</span><span id="revGc">GC: 0%</span><strong id="revTm" style="color: var(--warning);">Tm: 0°C</strong>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div id="view-literature" class="view">
+            <h2 class="section-title">PubMed Literature Match</h2>
+            <p class="section-desc">Recent published research papers related to the sequenced organism.</p>
+            <div class="card" id="papersContainer">
+                <div style="text-align: center; color: var(--text-muted); padding: 2rem 0;">Run pipeline to fetch literature...</div>
             </div>
         </div>
 
     </main>
 
 <script>
-/**
- * BIOWORKBENCH CORE ENGINE
- * Author: Sahil Setia
- * Description: Client-side genomic analysis SPA utilizing NCBI E-Utilities.
- */
-
 const API_KEY = "52045ffc554ccc9ed245da43bee911cd8409";
 
 const bioApp = {
     data: { accession: "", sequence: "", metadata: null, orfs: [], cpgIslands: [] },
+    hintTimeout: null, // Used for Debouncing
 
-    // Standard Genetic Code Dictionary
     codons: {
         'ATA':'I', 'ATC':'I', 'ATT':'I', 'ATG':'M', 'ACA':'T', 'ACC':'T', 'ACG':'T', 'ACT':'T',
         'AAC':'N', 'AAT':'N', 'AAA':'K', 'AAG':'K', 'AGC':'S', 'AGT':'S', 'AGA':'R', 'AGG':'R',
@@ -222,36 +227,106 @@ const bioApp = {
         'TAC':'Y', 'TAT':'Y', 'TAA':'*', 'TAG':'*', 'TGC':'C', 'TGT':'C', 'TGA':'*', 'TGG':'W',
     },
 
-    // UI Tab Switcher
     switchTab: function(viewId, btn) {
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         btn.classList.add('active');
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         document.getElementById(`view-${viewId}`).classList.add('active');
+        
+        // Mobile smooth scroll to active tab
+        btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
     },
 
     setStatus: function(msg) {
         document.getElementById('systemStatus').textContent = `[System]: ${msg}`;
     },
 
+    // --- NEW: AUTOCOMPLETE DEBOUNCER ENGINE ---
+    debounceHints: function(val) {
+        clearTimeout(this.hintTimeout);
+        const box = document.getElementById('autocompleteBox');
+        
+        if(val.length < 3) {
+            box.style.display = 'none';
+            return;
+        }
+        
+        box.style.display = 'block';
+        box.innerHTML = '<div class="hint-loading">Querying Database...</div>';
+        
+        // Wait 500ms after user stops typing to ping API
+        this.hintTimeout = setTimeout(() => this.fetchHints(val), 500);
+    },
+
+    fetchHints: async function(query) {
+        const box = document.getElementById('autocompleteBox');
+        try {
+            // 1. Search for generic terms in Nucleotide db
+            let sRes = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=${query}*&retmax=5&retmode=json&api_key=${API_KEY}`);
+            let sData = await sRes.json();
+            
+            if(!sData.esearchresult || sData.esearchresult.idlist.length === 0) {
+                box.innerHTML = '<div class="hint-loading">No direct matches found. Press Analyze to deep search.</div>';
+                return;
+            }
+
+            // 2. Fetch Titles for those UIDs
+            let uids = sData.esearchresult.idlist.join(',');
+            let sumRes = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=nuccore&id=${uids}&retmode=json&api_key=${API_KEY}`);
+            let sumData = await sumRes.json();
+
+            box.innerHTML = ''; // Clear loading
+            
+            sData.esearchresult.idlist.forEach(id => {
+                let rec = sumData.result[id];
+                let div = document.createElement('div');
+                div.className = 'hint-item';
+                // Click handler: Set input, hide box, run pipeline
+                div.onclick = () => {
+                    document.getElementById('accessionInput').value = rec.caption; // e.g. NC_12345
+                    box.style.display = 'none';
+                    this.runPipeline();
+                };
+                div.innerHTML = `
+                    <div class="hint-id">${rec.caption}</div>
+                    <div class="hint-title">${rec.title}</div>
+                `;
+                box.appendChild(div);
+            });
+
+        } catch (e) {
+            box.style.display = 'none';
+        }
+    },
+
+    // Close dropdown if clicking outside
+    hideDropdown: function(e) {
+        if(!document.querySelector('.search-wrapper').contains(e.target)) {
+            document.getElementById('autocompleteBox').style.display = 'none';
+        }
+    },
+
     // --- MAIN API PIPELINE ---
     runPipeline: async function() {
-        const input = document.getElementById('accessionInput').value.trim();
-        if(!input) return alert("NCBI Accession required.");
+        document.getElementById('autocompleteBox').style.display = 'none'; // Hide hints
+        let input = document.getElementById('accessionInput').value.trim();
+        if(!input) return alert("Search term required.");
         
         const btn = document.getElementById('runBtn');
         btn.disabled = true; btn.textContent = "Processing...";
-        this.data.accession = input;
 
         try {
-            // 1. Resolve UID
-            this.setStatus("Querying NCBI Nucleotide Database...");
-            let res = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=${input}&retmode=json&api_key=${API_KEY}`);
+            this.setStatus("Resolving Search Query...");
+            // Handle name search vs strict ID search
+            let searchTerm = input;
+            // If it doesn't look like an Accession ID (no underscore), search it broadly
+            if(!input.includes('_')) searchTerm = `${input}[All Fields] AND biomol_genomic[PROP]`;
+
+            let res = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=nuccore&term=${searchTerm}&retmode=json&api_key=${API_KEY}`);
             let json = await res.json();
-            if (!json.esearchresult || json.esearchresult.idlist.length === 0) throw new Error("Accession not found.");
+            if (!json.esearchresult || json.esearchresult.idlist.length === 0) throw new Error("No database matches found.");
             let uid = json.esearchresult.idlist[0];
 
-            // 2. Parallel Fetch: Metadata & FASTA Sequence
             this.setStatus("Downloading genomic records...");
             let [metaRes, fastaRes] = await Promise.all([
                 fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=nuccore&id=${uid}&retmode=json&api_key=${API_KEY}`),
@@ -262,34 +337,35 @@ const bioApp = {
             this.data.metadata = metaJson.result[uid];
             
             let rawFasta = await fastaRes.text();
-            let lines = rawFasta.split('\n'); lines.shift(); // Remove header
+            let lines = rawFasta.split('\n'); lines.shift(); 
             this.data.sequence = lines.join('').replace(/\s/g, '').toUpperCase();
+            this.data.accession = this.data.metadata.caption || input;
 
-            // 3. Bioinformatics Compute Step
-            this.setStatus("Executing internal algorithms...");
-            await new Promise(r => setTimeout(r, 50)); // Yield to paint
+            this.setStatus("Computing Biophysics...");
+            await new Promise(r => setTimeout(r, 50)); 
             
             this.computeStats();
             this.findORFsAndTranslate();
             this.mapCpGIslands();
             
+            // Trigger background literature fetch
+            this.fetchLiterature(this.data.metadata.organism || this.data.metadata.title);
+            
             this.updateDOM();
-            this.setStatus("Pipeline execution completed successfully.");
+            this.setStatus("Pipeline execution completed.");
         } catch (err) {
-            alert("Pipeline Error: " + err.message);
+            alert("Error: " + err.message);
             this.setStatus("Error encountered.");
         } finally {
-            btn.disabled = false; btn.textContent = "Execute Pipeline";
+            btn.disabled = false; btn.textContent = "Analyze";
         }
     },
-
-    // --- BIOINFORMATICS ALGORITHMS ---
 
     computeStats: function() {
         const seq = this.data.sequence;
         let gc = 0; 
         for(let i=0; i<seq.length; i++) { if(seq[i] === 'G' || seq[i] === 'C') gc++; }
-        this.data.gcPercent = ((gc / seq.length) * 100).toFixed(2);
+        this.data.gcPercent = ((gc / seq.length) * 100).toFixed(1);
     },
 
     findORFsAndTranslate: function() {
@@ -297,30 +373,25 @@ const bioApp = {
         this.data.orfs = [];
         const stops = ['TAA', 'TAG', 'TGA'];
 
-        // Six-frame translation logic (simplified to 3 forward frames for browser performance)
         for (let frame = 0; frame < 3; frame++) {
             for (let i = frame; i < seq.length - 2; i += 3) {
                 if (seq.substring(i, i+3) === 'ATG') { 
                     for (let j = i + 3; j < seq.length - 2; j += 3) {
                         if (stops.includes(seq.substring(j, j+3))) {
                             let len = (j+3) - i;
-                            if (len >= 300) { // Min 100 amino acids
+                            if (len >= 300) { 
                                 let dna = seq.substring(i, j+3);
                                 let protein = "";
                                 for(let k=0; k<dna.length-2; k+=3) protein += this.codons[dna.substr(k,3)] || 'X';
-                                
-                                // Biophysics: Avg Amino Acid weight is ~110 Daltons. 1 kDa = 1000 Da.
-                                let mw_kda = ((protein.length * 110) / 1000).toFixed(2);
-                                
+                                let mw_kda = ((protein.length * 110) / 1000).toFixed(1);
                                 this.data.orfs.push({ start: i+1, stop: j+3, dna: dna, protein: protein, mw: mw_kda });
                             }
-                            i = j; break; // Move to next potential start
+                            i = j; break; 
                         }
                     }
                 }
             }
         }
-        // Sort by length descending
         this.data.orfs.sort((a,b) => b.dna.length - a.dna.length);
         this.data.orfs.forEach((orf, i) => orf.id = `Gene_${i+1}`);
     },
@@ -328,65 +399,75 @@ const bioApp = {
     mapCpGIslands: function() {
         const seq = this.data.sequence;
         this.data.cpgIslands = [];
-        const windowSize = 200; // Standard epigenetic window
-        
-        // Scan sequence in chunks to find GC rich areas with high CG dinucleotides
-        for(let i=0; i < seq.length - windowSize; i += 100) {
-            let chunk = seq.substr(i, windowSize);
-            let c = 0, g = 0, cg = 0;
-            
+        for(let i=0; i < seq.length - 200; i += 100) {
+            let chunk = seq.substr(i, 200);
+            let c=0, g=0, cg=0;
             for(let j=0; j<chunk.length; j++) {
                 if(chunk[j] === 'C') c++;
                 if(chunk[j] === 'G') g++;
                 if(chunk[j] === 'C' && chunk[j+1] === 'G') cg++;
             }
-            
-            let gcPercent = ((c+g)/windowSize)*100;
-            // CpG Obs/Exp formula: (Observed CG * Window Size) / (C count * G count)
-            let obsExp = (c > 0 && g > 0) ? (cg * windowSize) / (c * g) : 0;
-            
-            // Standard biological definition of a CpG Island
-            if(gcPercent > 50 && obsExp > 0.6) {
-                this.data.cpgIslands.push({ start: i, end: i+windowSize, density: obsExp.toFixed(2) });
-                i += windowSize; // Skip ahead to avoid overlaps
+            let obsExp = (c > 0 && g > 0) ? (cg * 200) / (c * g) : 0;
+            if(((c+g)/200)*100 > 50 && obsExp > 0.6) {
+                this.data.cpgIslands.push({ start: i, end: i+200, density: obsExp.toFixed(2) });
+                i += 200; 
             }
         }
     },
 
-    scanMotif: function() {
-        const query = document.getElementById('motifInput').value.trim().toUpperCase();
-        const resBox = document.getElementById('motifResults');
-        if(!query || query.length < 3) return resBox.textContent = "Please enter at least 3 nucleotides.";
+    // --- NEW: FETCH RELATED RESEARCH PAPERS ---
+    fetchLiterature: async function(queryTerm) {
+        const container = document.getElementById('papersContainer');
+        if(!queryTerm) return container.innerHTML = '<div style="color:var(--text-muted)">Insufficient data to find literature.</div>';
         
-        let seq = this.data.sequence;
-        let hits = [];
-        let idx = seq.indexOf(query);
+        container.innerHTML = '<div style="text-align:center; color:var(--warning);">Querying PubMed Database...</div>';
         
-        while(idx !== -1 && hits.length < 50) {
-            let context = seq.substring(Math.max(0, idx-10), idx) + `<span style="color:var(--primary); font-weight:bold;">${query}</span>` + seq.substring(idx+query.length, idx+query.length+10);
-            hits.push(`[Pos: ${idx}] ...${context}...`);
-            idx = seq.indexOf(query, idx + 1);
+        try {
+            // Search PubMed for top 5 papers
+            let res = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${queryTerm}&retmax=5&retmode=json&api_key=${API_KEY}`);
+            let data = await res.json();
+            
+            if(!data.esearchresult || data.esearchresult.idlist.length === 0) {
+                return container.innerHTML = '<div style="color:var(--text-muted)">No recent publications found for this specific organism.</div>';
+            }
+
+            let uids = data.esearchresult.idlist.join(',');
+            let sumRes = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${uids}&retmode=json&api_key=${API_KEY}`);
+            let sumData = await sumRes.json();
+            
+            container.innerHTML = '';
+            data.esearchresult.idlist.forEach(id => {
+                let paper = sumData.result[id];
+                let div = document.createElement('div');
+                div.className = 'paper-item';
+                div.innerHTML = `
+                    <div class="paper-title"><a href="https://pubmed.ncbi.nlm.nih.gov/${id}/" target="_blank" style="color:var(--primary); text-decoration:none;">${paper.title}</a></div>
+                    <div class="paper-meta">
+                        ${paper.authors ? paper.authors.map(a => a.name).join(', ') : 'Unknown Authors'} <br>
+                        <strong>${paper.source}</strong> | Published: ${paper.pubdate}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+        } catch (e) {
+            container.innerHTML = '<div style="color:var(--danger)">Failed to load literature from PubMed.</div>';
         }
-        
-        resBox.innerHTML = hits.length > 0 ? `Found ${hits.length} occurrences (capped at 50):<br><br>` + hits.join('<br>') : "Motif not found in sequence.";
     },
 
-    // Thermodynamics: Calculates Tm using basic Wallace rule or nearest-neighbor approx.
     calculatePrimers: function() {
         const idx = document.getElementById('primerSelect').value;
         if(idx === "") return;
         
         const gene = this.data.orfs[idx];
         const fwd = gene.dna.substring(0, 20);
-        // Reverse complement for reverse primer
         const map = {'A':'T', 'T':'A', 'C':'G', 'G':'C'};
         const rev = gene.dna.substring(gene.dna.length - 20).split('').reverse().map(c => map[c]||c).join('');
         
         const getThermo = (s) => {
             let gcCount = 0; for(let char of s) if(char==='G'||char==='C') gcCount++;
-            // Advanced Tm formula for oligos ~20bp
             let tm = 64.9 + 41 * (gcCount - 16.4) / s.length;
-            return { gc: ((gcCount/s.length)*100).toFixed(1), tm: tm.toFixed(1) };
+            return { gc: ((gcCount/s.length)*100).toFixed(0), tm: tm.toFixed(1) };
         };
 
         let fStats = getThermo(fwd);
@@ -402,57 +483,46 @@ const bioApp = {
         document.getElementById('primerResults').style.display = 'flex';
     },
 
-    // --- DOM UPDATER ---
     updateDOM: function() {
-        // Dashboard Stats
         document.getElementById('stat-len').textContent = (this.data.sequence.length / 1000).toFixed(1) + ' kb';
         document.getElementById('stat-gc').textContent = this.data.gcPercent + '%';
         document.getElementById('stat-orfs').textContent = this.data.orfs.length;
         document.getElementById('stat-cpg').textContent = this.data.cpgIslands.length;
         
         let m = this.data.metadata;
+        document.getElementById('meta-acc').textContent = this.data.accession;
         document.getElementById('meta-def').textContent = m.title || "Unknown";
         document.getElementById('meta-org').textContent = m.organism || "Unknown";
         document.getElementById('meta-date').textContent = m.updatedate || "Unknown";
 
-        // Central Dogma: RNA Transcription (Replace T with U)
-        let rna = this.data.sequence.substring(0, 2000).replace(/T/g, 'U');
-        document.getElementById('mrnaViewer').textContent = rna + (this.data.sequence.length > 2000 ? "\n\n...[TRUNCATED FOR MEMORY]..." : "");
-
-        // Central Dogma: Translation Table
         const orfTbody = document.getElementById('orfTable');
         const primerSel = document.getElementById('primerSelect');
         orfTbody.innerHTML = ''; primerSel.innerHTML = '<option value="">-- Select Gene Target --</option>';
 
-        this.data.orfs.slice(0, 20).forEach((orf, i) => {
-            // Table row
+        this.data.orfs.slice(0, 15).forEach((orf, i) => {
             let tr = document.createElement('tr');
-            tr.innerHTML = `<td class="mono" style="color:var(--primary);">${orf.id}</td>
-                            <td class="mono">${orf.start} - ${orf.stop}</td>
-                            <td>${orf.protein.length} aa</td>
-                            <td>~${orf.mw} kDa</td>`;
+            tr.innerHTML = `<td class="mono" style="color:var(--primary);">${orf.id}</td><td class="mono">${orf.start} - ${orf.stop}</td><td>${orf.protein.length} aa</td><td>~${orf.mw} kDa</td>`;
             orfTbody.appendChild(tr);
             
-            // Primer dropdown
             let opt = document.createElement('option');
             opt.value = i; opt.textContent = `${orf.id} (${orf.dna.length} bp)`;
             primerSel.appendChild(opt);
         });
 
-        // Epigenetics: CpG Table
         const cpgTbody = document.getElementById('cpgTable');
         cpgTbody.innerHTML = '';
-        if(this.data.cpgIslands.length === 0) {
-            cpgTbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No CpG islands detected.</td></tr>';
-        } else {
-            this.data.cpgIslands.slice(0, 20).forEach((isl, i) => {
-                let tr = document.createElement('tr');
-                tr.innerHTML = `<td>Island_${i+1}</td><td class="mono">${isl.start}</td><td class="mono">${isl.end}</td><td>200</td><td style="color:var(--success);">${isl.density}</td>`;
-                cpgTbody.appendChild(tr);
-            });
-        }
+        if(this.data.cpgIslands.length === 0) cpgTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No CpG islands detected.</td></tr>';
+        
+        this.data.cpgIslands.slice(0, 15).forEach((isl, i) => {
+            let tr = document.createElement('tr');
+            tr.innerHTML = `<td>Isl_${i+1}</td><td class="mono">${isl.start}</td><td class="mono">${isl.end}</td><td style="color:var(--success);">${isl.density}</td>`;
+            cpgTbody.appendChild(tr);
+        });
     }
 };
+
+// Event listener to close hints if tapped elsewhere
+document.addEventListener('click', (e) => bioApp.hideDropdown(e));
 </script>
 </body>
 </html>
