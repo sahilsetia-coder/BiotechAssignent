@@ -28,11 +28,11 @@
         .submission-badge strong { color: var(--primary); display: block; font-size: 0.85rem; }
         .submission-badge span { color: var(--text-muted); }
 
-        /* --- CONTROL PANEL & AUTOCOMPLETE --- */
+        /* --- CONTROL PANEL --- */
         .control-panel { background: var(--bg-surface); padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 10px; z-index: 90; position: relative; }
         .search-wrapper { flex: 1; position: relative; }
-        input[type="text"] { width: 100%; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-sans); font-size: 14px; transition: var(--transition); }
-        input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+        input[type="text"], select { width: 100%; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-sans); font-size: 14px; transition: var(--transition); }
+        input[type="text"]:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
         .btn { padding: 12px 24px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;}
         .btn:hover { background: #0ea5e9; transform: translateY(-1px); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -60,7 +60,7 @@
         /* --- CARDS & GRIDS --- */
         .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;}
-        .card-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; }
+        .card-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; margin-bottom: 8px; display: block;}
         .card-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-top: 0.5rem; font-family: var(--font-mono); }
 
         /* PATHOLOGY SPECIFIC STYLES */
@@ -94,6 +94,7 @@
             .submission-badge { text-align: left; width: 100%; }
             .control-panel { flex-direction: column; }
             .btn { width: 100%; }
+            .grid-stats { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -123,6 +124,7 @@
             <div class="nav-item active" onclick="bioApp.switchTab('dashboard', this)">Overview</div>
             <div class="nav-item" onclick="bioApp.switchTab('pathology', this)">🦠 Pathology</div>
             <div class="nav-item" onclick="bioApp.switchTab('map', this)">🗺️ Map</div>
+            <div class="nav-item" onclick="bioApp.switchTab('cloning', this)">🧬 Virtual Cloning</div>
             <div class="nav-item" onclick="bioApp.switchTab('dogma', this)">Central Dogma</div>
             <div class="nav-item" onclick="bioApp.switchTab('epigenetics', this)">Epigenetics</div>
             <div class="nav-item" onclick="bioApp.switchTab('tools', this)">Thermodynamics</div>
@@ -143,7 +145,7 @@
             </div>
 
             <div class="card">
-                <div class="card-label" style="margin-bottom: 10px;">NCBI Record Metadata</div>
+                <span class="card-label">NCBI Record Metadata</span>
                 <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.8;">
                     <div><strong style="color: white;">Accession ID:</strong> <span id="meta-acc" class="mono">---</span></div>
                     <div><strong style="color: white;">Definition:</strong> <span id="meta-def">---</span></div>
@@ -161,7 +163,7 @@
             </div>
 
             <div class="card" style="margin-top: 2rem;">
-                <div class="card-label">Diagnostic Biomarkers</div>
+                <span class="card-label">Diagnostic Biomarkers</span>
                 <ul style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; margin-left: 20px; line-height: 1.6;">
                     <li><strong>Crown Gall (Ti Plasmid):</strong> Detects presence of <i>ipt</i> (isopentenyl transferase) and <i>virD2</i> markers.</li>
                     <li><strong>Hairy Root (Ri Plasmid):</strong> Detects presence of <i>rolB</i> and <i>rolC</i> (root locus) markers.</li>
@@ -182,6 +184,51 @@
                     <span id="tt-pos" class="mono" style="color:var(--text-muted);">---</span><br>
                     <span id="tt-len" style="color:var(--success);">---</span>
                 </div>
+            </div>
+        </div>
+
+        <div id="view-cloning" class="view">
+            <h2 class="section-title">Virtual Cloning Lab</h2>
+            <p class="section-desc">Simulate restriction digestion and ligation to create a recombinant plasmid.</p>
+            
+            <div class="card">
+                <span class="card-label" style="color: var(--primary);">1. Select Vector Backbone</span>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
+                    Currently loaded sequence (<span id="cloneVectorName" class="mono">---</span>) will be used as the backbone.
+                </div>
+
+                <span class="card-label" style="color: var(--success);">2. Select Insert (Gene of Interest)</span>
+                <select id="cloneInsert" style="margin-bottom: 1rem;">
+                    <option value="">-- Load sequence to view available genes --</option>
+                </select>
+
+                <span class="card-label" style="color: var(--warning);">3. Select Restriction Enzymes</span>
+                <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
+                    <select id="cloneE1" style="flex: 1;">
+                        <option value="">-- 5' End Enzyme --</option>
+                        <option value="GAATTC">EcoRI (GAATTC)</option>
+                        <option value="GGATCC">BamHI (GGATCC)</option>
+                        <option value="AAGCTT">HindIII (AAGCTT)</option>
+                    </select>
+                    <select id="cloneE2" style="flex: 1;">
+                        <option value="">-- 3' End Enzyme --</option>
+                        <option value="GAATTC">EcoRI (GAATTC)</option>
+                        <option value="GGATCC">BamHI (GGATCC)</option>
+                        <option value="AAGCTT">HindIII (AAGCTT)</option>
+                    </select>
+                </div>
+
+                <button class="btn" style="width: 100%;" onclick="bioApp.simulateCloning()">Simulate Ligation</button>
+            </div>
+
+            <div id="cloneResultCard" class="card" style="display: none; border-color: var(--success);">
+                <span class="card-label" style="color: var(--success);">Recombinant Plasmid Generated</span>
+                <div class="grid-stats" style="margin-top: 1rem; margin-bottom: 1rem;">
+                    <div><div class="card-label">New Size</div><div id="cloneResSize" class="card-value" style="font-size: 1.2rem;">0 kb</div></div>
+                    <div><div class="card-label">New GC%</div><div id="cloneResGc" class="card-value" style="font-size: 1.2rem;">0%</div></div>
+                </div>
+                <span class="card-label">Construct Preview (Top 500bp)</span>
+                <div id="cloneResSeq" class="seq-box" style="margin-top: 0.5rem; color: var(--text-main);"></div>
             </div>
         </div>
 
@@ -233,11 +280,9 @@ const bioApp = {
     data: { accession: "", sequence: "", metadata: null, orfs: [], cpgIslands: [], pathology: {} },
     hintTimeout: null,
 
-    // Simplified Biological Signatures for the Diagnostic Scanner
-    // In a real lab, these would be massive BLAST matrices. For the browser, we use conserved hexamer/octamer sequences known to exist in these genes.
     pathologyMarkers: {
-        crownGall: { name: "Crown Gall Disease (Ti Plasmid)", markers: ["GATCCGTC", "ATGCCTGC", "TCGATGTC"] }, // Mock conserved signatures for ipt/vir
-        hairyRoot: { name: "Hairy Root Disease (Ri Plasmid)", markers: ["CGCGGATC", "GGATCCCG", "ATGCGTAC"] }  // Mock conserved signatures for rolB/C
+        crownGall: { name: "Crown Gall Disease (Ti Plasmid)", markers: ["GATCCGTC", "ATGCCTGC", "TCGATGTC"] }, 
+        hairyRoot: { name: "Hairy Root Disease (Ri Plasmid)", markers: ["CGCGGATC", "GGATCCCG", "ATGCGTAC"] }
     },
 
     codons: {
@@ -315,6 +360,8 @@ const bioApp = {
 
     runPipeline: async function() {
         document.getElementById('autocompleteBox').style.display = 'none';
+        document.getElementById('cloneResultCard').style.display = 'none'; // reset cloning tab
+        
         let input = document.getElementById('accessionInput').value.trim();
         if(!input) return alert("Search term required.");
         
@@ -350,7 +397,7 @@ const bioApp = {
             this.computeStats();
             this.findORFsAndTranslate();
             this.mapCpGIslands();
-            this.detectPathogens(); // Run Disease Scanner
+            this.detectPathogens(); 
             
             this.updateDOM();
             this.setStatus("Pipeline execution completed.");
@@ -415,28 +462,59 @@ const bioApp = {
         }
     },
 
-    // --- NEW: DISEASE DETECTION ENGINE ---
     detectPathogens: function() {
         const seq = this.data.sequence;
         this.data.pathology = { crownGall: false, hairyRoot: false };
-        
-        // 1. Check Organism Metadata for strong hint
         const org = (this.data.metadata.organism || "").toLowerCase();
         const title = (this.data.metadata.title || "").toLowerCase();
         
         if(org.includes("tumefaciens") || title.includes("pti") || title.includes("crown gall")) this.data.pathology.crownGall = true;
         if(org.includes("rhizogenes") || title.includes("pri") || title.includes("hairy root")) this.data.pathology.hairyRoot = true;
 
-        // 2. DNA Signature Scan (simulating BLAST against known vir/rol genes)
-        // If it finds 2 or more signature hits in the sequence, it flags positive.
         const scan = (markers) => {
-            let hits = 0;
-            markers.forEach(m => { if(seq.indexOf(m) !== -1) hits++; });
-            return hits >= 2;
+            let hits = 0; markers.forEach(m => { if(seq.indexOf(m) !== -1) hits++; }); return hits >= 2;
         };
 
         if(scan(this.pathologyMarkers.crownGall.markers)) this.data.pathology.crownGall = true;
         if(scan(this.pathologyMarkers.hairyRoot.markers)) this.data.pathology.hairyRoot = true;
+    },
+
+    // --- NEW: VIRTUAL CLONING SIMULATOR ---
+    simulateCloning: function() {
+        let e1 = document.getElementById('cloneE1').value;
+        let e2 = document.getElementById('cloneE2').value;
+        let orfIdx = document.getElementById('cloneInsert').value;
+        
+        if(orfIdx === "" || e1 === "" || e2 === "") return alert("Please select an Insert and both Restriction Enzymes.");
+
+        let seq = this.data.sequence;
+        let insertDna = this.data.orfs[orfIdx].dna;
+
+        // Find cut sites in vector
+        let cut1 = seq.indexOf(e1);
+        let cut2 = seq.indexOf(e2, cut1 + 1);
+
+        if(cut1 === -1 || cut2 === -1) {
+            return alert("Digestion Failed: One or both of those enzyme restriction sites were not found in the Vector backbone.");
+        }
+
+        // Ligate: Plasmid start -> E1 cut -> Insert -> E2 cut -> Plasmid end
+        // Simplified sticky end simulation by retaining half the enzyme site
+        let recombinant = seq.substring(0, cut1) + e1.substring(0, 3) + insertDna + e2.substring(3) + seq.substring(cut2 + e2.length);
+
+        // Compute stats for new plasmid
+        let rGc = 0; for(let c of recombinant) if(c==='G'||c==='C') rGc++;
+        let rGcPercent = ((rGc / recombinant.length) * 100).toFixed(1);
+
+        document.getElementById('cloneResSize').textContent = (recombinant.length / 1000).toFixed(2) + " kb";
+        document.getElementById('cloneResGc').textContent = rGcPercent + "%";
+        
+        // Show sequence with the insert highlighted
+        let preview = recombinant.substring(0, 500);
+        document.getElementById('cloneResSeq').textContent = preview + "... [SEQUENCE TRUNCATED]";
+        
+        document.getElementById('cloneResultCard').style.display = 'block';
+        alert("Success! Recombinant Plasmid created.");
     },
 
     calculatePrimers: function() {
@@ -511,48 +589,43 @@ const bioApp = {
         // Render Pathology
         const pathRes = document.getElementById('pathologyResults');
         pathRes.innerHTML = '';
-        
-        const renderAlert = (title, desc, isPos) => {
-            return `
-                <div class="pathology-alert ${isPos ? 'positive' : 'negative'}">
-                    <div class="path-title">
-                        ${title}
-                        <span class="badge ${isPos ? 'pos' : 'neg'}">${isPos ? 'DETECTED' : 'CLEAR'}</span>
-                    </div>
-                    <div style="font-size:0.85rem; color:var(--text-muted);">${desc}</div>
-                </div>
-            `;
-        };
+        const renderAlert = (title, desc, isPos) => `
+            <div class="pathology-alert ${isPos ? 'positive' : 'negative'}">
+                <div class="path-title">${title}<span class="badge ${isPos ? 'pos' : 'neg'}">${isPos ? 'DETECTED' : 'CLEAR'}</span></div>
+                <div style="font-size:0.85rem; color:var(--text-muted);">${desc}</div>
+            </div>`;
+        pathRes.innerHTML += renderAlert("Crown Gall Disease", "Scanned for Ti Plasmid markers.", this.data.pathology.crownGall);
+        pathRes.innerHTML += renderAlert("Hairy Root Disease", "Scanned for Ri Plasmid markers.", this.data.pathology.hairyRoot);
 
-        pathRes.innerHTML += renderAlert(
-            "Crown Gall Disease", 
-            "Scanned for Ti Plasmid markers (ipt, iaaM, virD2).", 
-            this.data.pathology.crownGall
-        );
-        pathRes.innerHTML += renderAlert(
-            "Hairy Root Disease", 
-            "Scanned for Ri Plasmid markers (rolA, rolB, rolC).", 
-            this.data.pathology.hairyRoot
-        );
-
+        // Tables & Dropdowns
         const orfTbody = document.getElementById('orfTable');
         const primerSel = document.getElementById('primerSelect');
-        orfTbody.innerHTML = ''; primerSel.innerHTML = '<option value="">-- Select Gene Target --</option>';
+        const cloneInsertSel = document.getElementById('cloneInsert');
+        
+        orfTbody.innerHTML = ''; 
+        primerSel.innerHTML = '<option value="">-- Select Gene Target --</option>';
+        cloneInsertSel.innerHTML = '<option value="">-- Select Gene to Insert --</option>';
+
+        // Set Vector Name in Cloning Tab
+        document.getElementById('cloneVectorName').textContent = this.data.accession;
 
         this.data.orfs.slice(0, 15).forEach((orf, i) => {
+            // Dogma Table
             let tr = document.createElement('tr');
             tr.innerHTML = `<td class="mono" style="color:var(--primary);">${orf.id}</td><td class="mono">${orf.start} - ${orf.stop}</td><td>${orf.protein.length} aa</td><td>~${orf.mw} kDa</td>`;
             orfTbody.appendChild(tr);
             
+            // Primer & Cloning Dropdowns
             let opt = document.createElement('option');
             opt.value = i; opt.textContent = `${orf.id} (${orf.dna.length} bp)`;
-            primerSel.appendChild(opt);
+            primerSel.appendChild(opt.cloneNode(true));
+            cloneInsertSel.appendChild(opt);
         });
 
+        // Epigenetics
         const cpgTbody = document.getElementById('cpgTable');
         cpgTbody.innerHTML = '';
         if(this.data.cpgIslands.length === 0) cpgTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No CpG islands detected.</td></tr>';
-        
         this.data.cpgIslands.slice(0, 15).forEach((isl, i) => {
             let tr = document.createElement('tr');
             tr.innerHTML = `<td>Isl_${i+1}</td><td class="mono">${isl.start}</td><td class="mono">${isl.end}</td><td style="color:var(--success);">${isl.density}</td>`;
