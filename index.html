@@ -34,8 +34,8 @@
         /* --- CONTROL PANEL & AUTOCOMPLETE --- */
         .control-panel { background: var(--bg-surface); padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 10px; z-index: 90; position: relative; }
         .search-wrapper { flex: 1; position: relative; }
-        input[type="text"], select { width: 100%; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-sans); font-size: 14px; transition: var(--transition); }
-        input[type="text"]:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+        input[type="text"] { width: 100%; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-sans); font-size: 14px; transition: var(--transition); }
+        input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
         .btn { padding: 12px 24px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;}
         .btn:hover { background: #0ea5e9; transform: translateY(-1px); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -63,7 +63,7 @@
         /* --- CARDS & GRIDS --- */
         .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;}
-        .card-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 8px;}
+        .card-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; }
         .card-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-top: 0.5rem; font-family: var(--font-mono); }
 
         /* PATHOLOGY STYLES */
@@ -82,10 +82,8 @@
         .arc-gene:hover { stroke-width: 25; filter: brightness(1.3); }
         #mapTooltip { position: absolute; background: rgba(15,23,42,0.95); border: 1px solid var(--primary); padding: 1rem; border-radius: 8px; font-size: 0.8rem; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 10; backdrop-filter: blur(4px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
 
-        /* 3D Canvas & Gel Canvas */
-        .canvas-container { width: 100%; overflow-x: auto; background: #000; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1rem; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); }
-        #dnaCanvas { width: 100%; height: 350px; cursor: crosshair; }
-        #gelCanvas { height: 450px; min-width: 600px; } /* Gel needs width for lanes */
+        /* 3D Canvas */
+        #dnaCanvas { width: 100%; height: 350px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1rem; box-shadow: inset 0 0 50px rgba(0,0,0,0.5); cursor: crosshair; }
 
         /* --- TABLES & MISC --- */
         .table-container { overflow-x: auto; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; }
@@ -138,13 +136,11 @@
         <div class="nav-menu">
             <div class="nav-item active" onclick="bioApp.switchTab('dashboard', this)">Overview</div>
             <div class="nav-item" onclick="bioApp.switchTab('dna', this)">🧬 3D DNA</div>
-            <div class="nav-item" onclick="bioApp.switchTab('map', this)">🗺️ Plasmid Map</div>
-            <div class="nav-item" onclick="bioApp.switchTab('gel', this)">🧫 Gel Electrophoresis</div>
-            <div class="nav-item" onclick="bioApp.switchTab('cloning', this)">✂️ Virtual Cloning</div>
             <div class="nav-item" onclick="bioApp.switchTab('pathology', this)">🦠 Pathology</div>
+            <div class="nav-item" onclick="bioApp.switchTab('map', this)">🗺️ Map</div>
             <div class="nav-item" onclick="bioApp.switchTab('dogma', this)">Central Dogma</div>
             <div class="nav-item" onclick="bioApp.switchTab('epigenetics', this)">Epigenetics</div>
-            <div class="nav-item" onclick="bioApp.switchTab('tools', this)">PCR Primers</div>
+            <div class="nav-item" onclick="bioApp.switchTab('tools', this)">Thermodynamics</div>
             <div class="nav-item" onclick="bioApp.switchTab('literature', this)">📚 Literature</div>
             <div class="nav-item" onclick="bioApp.switchTab('source', this)" style="color: var(--success);">💻 Source Code</div>
         </div>
@@ -164,7 +160,7 @@
             </div>
 
             <div class="card">
-                <div class="card-label">NCBI Record Metadata</div>
+                <div class="card-label" style="margin-bottom: 10px;">NCBI Record Metadata</div>
                 <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.8;">
                     <div><strong style="color: white;">Accession ID:</strong> <span id="meta-acc" class="mono">---</span></div>
                     <div><strong style="color: white;">Definition:</strong> <span id="meta-def">---</span></div>
@@ -176,16 +172,23 @@
         <div id="view-dna" class="view">
             <h2 class="section-title">3D Double Helix Engine</h2>
             <p class="section-desc">Real-time mathematically generated trigonometric visualization of ATGC base pairs.</p>
-            <div class="canvas-container" style="overflow: hidden;">
-                <canvas id="dnaCanvas"></canvas>
-            </div>
+            <canvas id="dnaCanvas"></canvas>
             <div class="card">
                 <div class="card-label">Nucleotide Base Pairing (ATGC)</div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6;">
-                    The engine utilizes Canvas API to render Purine and Pyrimidine structures. 
+                    The engine now renders dynamic representations of Purine and Pyrimidine structures. 
                     <strong style="color: #f43f5e;">Adenine (A)</strong> perfectly pairs with <strong style="color: #38bdf8;">Thymine (T)</strong>, 
                     and <strong style="color: #34d399;">Guanine (G)</strong> pairs with <strong style="color: #fbbf24;">Cytosine (C)</strong>. 
+                    Depth and scale are dynamically updated utilizing Z-axis pseudo-layering algorithms.
                 </p>
+            </div>
+        </div>
+
+        <div id="view-pathology" class="view">
+            <h2 class="section-title">Pathogenicity Diagnostics</h2>
+            <p class="section-desc">Scans the sequence for highly conserved oncogenes and virulence markers associated with Agrobacterium infections.</p>
+            <div id="pathologyResults">
+                <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Run pipeline to perform diagnostic scan...</div>
             </div>
         </div>
 
@@ -203,64 +206,6 @@
                     <span id="tt-pos" class="mono" style="color:var(--text-muted);">---</span><br>
                     <span id="tt-len" style="color:var(--success);">---</span>
                 </div>
-            </div>
-        </div>
-
-        <div id="view-gel" class="view">
-            <h2 class="section-title">UV Gel Electrophoresis Simulator</h2>
-            <p class="section-desc">Mathematically simulates restriction digest migration through an agarose gel under UV illumination.</p>
-            
-            <div class="canvas-container">
-                <canvas id="gelCanvas" width="800" height="450"></canvas>
-            </div>
-            
-            <div class="card">
-                <div class="card-label">Electrophoresis Physics Engine</div>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6;">
-                    The system performs an in-silico restriction digest using standard enzymes (EcoRI, BamHI, HindIII). 
-                    The vertical migration distance of each fragment is calculated logarithmically ($Distance \propto \log(Size)$), 
-                    mirroring how smaller DNA fragments move faster through the porous agarose matrix toward the positive electrode.
-                </p>
-            </div>
-        </div>
-
-        <div id="view-cloning" class="view">
-            <h2 class="section-title">Virtual Cloning Lab</h2>
-            <p class="section-desc">Simulate restriction digestion and ligation to create a recombinant plasmid.</p>
-            
-            <div class="card">
-                <span class="card-label" style="color: var(--primary);">1. Select Vector Backbone</span>
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                    Currently loaded sequence (<span id="cloneVectorName" class="mono">---</span>) will be used as the backbone.
-                </div>
-
-                <span class="card-label" style="color: var(--success);">2. Select Insert (Gene of Interest)</span>
-                <select id="cloneInsert" style="margin-bottom: 1rem;"><option value="">-- Load sequence first --</option></select>
-
-                <span class="card-label" style="color: var(--warning);">3. Select Restriction Enzymes</span>
-                <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-                    <select id="cloneE1" style="flex: 1;"><option value="">-- 5' Enzyme --</option><option value="GAATTC">EcoRI</option><option value="GGATCC">BamHI</option><option value="AAGCTT">HindIII</option></select>
-                    <select id="cloneE2" style="flex: 1;"><option value="">-- 3' Enzyme --</option><option value="GAATTC">EcoRI</option><option value="GGATCC">BamHI</option><option value="AAGCTT">HindIII</option></select>
-                </div>
-                <button class="btn" style="width: 100%;" onclick="bioApp.simulateCloning()">Simulate Ligation</button>
-            </div>
-
-            <div id="cloneResultCard" class="card" style="display: none; border-color: var(--success);">
-                <span class="card-label" style="color: var(--success);">Recombinant Plasmid Generated</span>
-                <div class="grid-stats" style="margin-top: 1rem; margin-bottom: 1rem;">
-                    <div><div class="card-label">New Size</div><div id="cloneResSize" class="card-value" style="font-size: 1.2rem;">0 kb</div></div>
-                    <div><div class="card-label">New GC%</div><div id="cloneResGc" class="card-value" style="font-size: 1.2rem;">0%</div></div>
-                </div>
-                <span class="card-label">Construct Preview (Top 500bp)</span>
-                <div id="cloneResSeq" class="seq-box" style="margin-top: 0.5rem; color: var(--text-main);"></div>
-            </div>
-        </div>
-
-        <div id="view-pathology" class="view">
-            <h2 class="section-title">Pathogenicity Diagnostics</h2>
-            <p class="section-desc">Scans the sequence for highly conserved oncogenes and virulence markers.</p>
-            <div id="pathologyResults">
-                <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Run pipeline to perform diagnostic scan...</div>
             </div>
         </div>
 
@@ -325,7 +270,7 @@
                     <h2 class="section-title">Application Source Code</h2>
                     <p class="section-desc" style="margin-bottom: 0;">Open-source transparency. View the complete HTML, CSS, and JS powering this tool.</p>
                 </div>
-                <button class="btn" style="background: var(--success); padding: 8px 16px; font-size: 0.85rem;" onclick="bioApp.copySource()">📋 Copy</button>
+                <button class="btn" style="background: var(--success); padding: 8px 16px; font-size: 0.85rem;" onclick="bioApp.copySource()">📋 Copy Code</button>
             </div>
             <div class="seq-box code-box" id="sourceCodeViewer">Loading source code...</div>
         </div>
@@ -336,16 +281,10 @@
 const API_KEY = "52045ffc554ccc9ed245da43bee911cd8409";
 
 const bioApp = {
-    data: { accession: "", sequence: "", metadata: null, orfs: [], cpgIslands: [], pathology: {}, digest: [] },
+    data: { accession: "", sequence: "", metadata: null, orfs: [], cpgIslands: [], pathology: {} },
     hintTimeout: null,
     sourceLoaded: false,
     dnaAnimationId: null,
-
-    enzymes: [
-        { name: "EcoRI", site: "GAATTC", color: "#38bdf8" }, 
-        { name: "BamHI", site: "GGATCC", color: "#fbbf24" }, 
-        { name: "HindIII", site: "AAGCTT", color: "#f43f5e" }
-    ],
 
     pathologyMarkers: {
         crownGall: { name: "Crown Gall Disease (Ti Plasmid)", markers: ["GATCCGTC", "ATGCCTGC", "TCGATGTC"] }, 
@@ -384,10 +323,9 @@ const bioApp = {
         
         if(viewId === 'source') this.loadSourceCode();
         if(viewId === 'dna') this.startDNA(); else this.stopDNA(); 
-        if(viewId === 'gel') this.drawGel();
     },
 
-    // --- CANVAS 3D DNA RENDERER ---
+    // --- ENHANCED CANVAS 3D DNA RENDERER WITH ATGC ---
     startDNA: function() {
         if(this.dnaAnimationId) return; 
         const canvas = document.getElementById('dnaCanvas');
@@ -396,116 +334,85 @@ const bioApp = {
         let height = canvas.height = 350;
         let angle = 0;
 
+        // Base Pair Biological Definitions
         const pairs = [
-            { b1: 'A', c1: '#f43f5e', b2: 'T', c2: '#38bdf8' }, 
-            { b1: 'T', c1: '#38bdf8', b2: 'A', c2: '#f43f5e' }, 
-            { b1: 'G', c1: '#34d399', b2: 'C', c2: '#fbbf24' }, 
-            { b1: 'C', c1: '#fbbf24', b2: 'G', c2: '#34d399' }  
+            { b1: 'A', c1: '#f43f5e', b2: 'T', c2: '#38bdf8' }, // A (Red) pairs with T (Blue)
+            { b1: 'T', c1: '#38bdf8', b2: 'A', c2: '#f43f5e' }, // T pairs with A
+            { b1: 'G', c1: '#34d399', b2: 'C', c2: '#fbbf24' }, // G (Green) pairs with C (Yellow)
+            { b1: 'C', c1: '#fbbf24', b2: 'G', c2: '#34d399' }  // C pairs with G
         ];
 
         const drawNode = (x, y, scale, color, letter) => {
             let radius = 4 + scale * 8;
-            ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fillStyle = color; ctx.shadowBlur = 15; ctx.shadowColor = color; ctx.fill();
-            ctx.shadowBlur = 0; 
+            
+            // Draw Glowing Molecule
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = color;
+            ctx.fill();
+            ctx.shadowBlur = 0; // Reset shadow for text
 
+            // Draw Typography if molecule is in the foreground
             if (scale > 0.4) {
-                ctx.fillStyle = '#020617'; 
+                ctx.fillStyle = '#020617'; // Dark background color for text contrast
                 ctx.font = `bold ${8 + scale * 5}px var(--font-mono)`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
                 ctx.fillText(letter, x, y);
             }
         };
 
         const render = () => {
             ctx.clearRect(0, 0, width, height);
-            let centerY = height / 2; let amplitude = 70; let frequency = 0.025; let spacing = 28; 
+            
+            let centerY = height / 2;
+            let amplitude = 70; // Width of the helix
+            let frequency = 0.025; // Tightness of the twists
+            let spacing = 28; // Space between base pairs
 
             for (let i = 0; i < width; i += spacing) {
+                // Trigonometry for double helix structure
                 let y1 = centerY + Math.sin(i * frequency + angle) * amplitude;
                 let y2 = centerY + Math.sin(i * frequency + angle + Math.PI) * amplitude;
+                
+                // Scale simulates Z-depth illusion
                 let scale1 = (Math.cos(i * frequency + angle) + 1) / 2;
                 let scale2 = (Math.cos(i * frequency + angle + Math.PI) + 1) / 2;
-                let pIdx = Math.floor((i * 17) % 4); let pair = pairs[pIdx];
 
-                ctx.beginPath(); ctx.moveTo(i, y1); ctx.lineTo(i, y2);
-                ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 + scale1 * 0.2})`; ctx.lineWidth = 2; ctx.stroke();
+                // Pick a pseudo-random but stable base pair
+                let pIdx = Math.floor((i * 17) % 4);
+                let pair = pairs[pIdx];
 
+                // Connecting Hydrogen Bonds
+                ctx.beginPath();
+                ctx.moveTo(i, y1);
+                ctx.lineTo(i, y2);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 + scale1 * 0.2})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Z-Sorting: Draw the molecule that is furthest back first, then the front
                 if (scale1 < scale2) {
-                    drawNode(i, y1, scale1, pair.c1, pair.b1); drawNode(i, y2, scale2, pair.c2, pair.b2);
+                    drawNode(i, y1, scale1, pair.c1, pair.b1); // Draw Back
+                    drawNode(i, y2, scale2, pair.c2, pair.b2); // Draw Front
                 } else {
-                    drawNode(i, y2, scale2, pair.c2, pair.b2); drawNode(i, y1, scale1, pair.c1, pair.b1);
+                    drawNode(i, y2, scale2, pair.c2, pair.b2); // Draw Back
+                    drawNode(i, y1, scale1, pair.c1, pair.b1); // Draw Front
                 }
             }
-            angle += 0.03; 
+            angle += 0.03; // Global rotation speed
             this.dnaAnimationId = requestAnimationFrame(render);
         };
         render();
     },
 
     stopDNA: function() {
-        if(this.dnaAnimationId) { cancelAnimationFrame(this.dnaAnimationId); this.dnaAnimationId = null; }
-    },
-
-    // --- NEW: GEL ELECTROPHORESIS RENDERER ---
-    drawGel: function() {
-        const canvas = document.getElementById('gelCanvas');
-        if(!canvas || !this.data.sequence) return;
-        const ctx = canvas.getContext('2d');
-        const width = canvas.width = 800; // Fixed inner resolution
-        const height = canvas.height = 450;
-        
-        ctx.fillStyle = '#050505'; // Dark gel background
-        ctx.fillRect(0, 0, width, height);
-
-        // Draw gel wells
-        ctx.fillStyle = 'rgba(255,255,255,0.1)';
-        for(let i=0; i<4; i++) { ctx.fillRect(100 + (i*180), 20, 60, 15); }
-
-        const maxLog = Math.log10(this.data.sequence.length || 100000);
-        const minLog = Math.log10(100); // 100bp bottom cutoff
-        
-        // Logarithmic scale mapping function (DNA runs top to bottom)
-        const getY = (size) => {
-            if(size <= 0) return height;
-            let logSize = Math.log10(size);
-            let percent = (maxLog - logSize) / (maxLog - minLog);
-            return 50 + (percent * 350); // Margin top and bottom
-        };
-
-        const drawBand = (x, y, intensity, color) => {
-            ctx.shadowBlur = 10 * intensity;
-            ctx.shadowColor = color;
-            ctx.fillStyle = `rgba(${color}, ${0.5 + (intensity * 0.5)})`;
-            ctx.fillRect(x, y, 60, 4);
-            ctx.shadowBlur = 0; // reset
-        };
-
-        // Render Ladder (Lane 0)
-        ctx.fillStyle = '#fff'; ctx.font = '12px monospace'; ctx.fillText('1kb Ladder', 100, 15);
-        const ladderSizes = [10000, 8000, 6000, 5000, 4000, 3000, 2000, 1500, 1000, 500];
-        ladderSizes.forEach(size => {
-            let y = getY(size);
-            if(y > 40 && y < height - 10) {
-                drawBand(100, y, 0.8, '100, 255, 100'); // Greenish ladder
-                ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                ctx.fillText((size/1000)+'kb', 65, y+4);
-            }
-        });
-
-        // Render Enzyme Lanes
-        this.data.digest.forEach((dig, i) => {
-            let xOffset = 280 + (i * 180);
-            ctx.fillStyle = '#fff'; ctx.fillText(dig.enzyme, xOffset, 15);
-            
-            // Draw bands
-            dig.fragments.forEach(fragSize => {
-                let y = getY(fragSize);
-                if(y > 40 && y < height - 10) {
-                    drawBand(xOffset, y, 1.0, '56, 189, 248'); // Bright blue DNA bands
-                }
-            });
-        });
+        if(this.dnaAnimationId) {
+            cancelAnimationFrame(this.dnaAnimationId);
+            this.dnaAnimationId = null;
+        }
     },
 
     loadSourceCode: async function() {
@@ -526,7 +433,9 @@ const bioApp = {
         navigator.clipboard.writeText(code).then(() => alert("✅ Source code copied!")).catch(err => alert("Failed to copy."));
     },
 
-    setStatus: function(msg) { document.getElementById('systemStatus').textContent = `[System]: ${msg}`; },
+    setStatus: function(msg) {
+        document.getElementById('systemStatus').textContent = `[System]: ${msg}`;
+    },
 
     debounceHints: function(val) {
         clearTimeout(this.hintTimeout);
@@ -568,8 +477,6 @@ const bioApp = {
 
     runPipeline: async function() {
         document.getElementById('autocompleteBox').style.display = 'none';
-        document.getElementById('cloneResultCard').style.display = 'none'; 
-        
         let input = document.getElementById('accessionInput').value.trim();
         if(!input) return alert("Search term required.");
         
@@ -605,9 +512,9 @@ const bioApp = {
             this.computeStats();
             this.findORFsAndTranslate();
             this.mapCpGIslands();
-            this.detectPathogens(); 
-            this.runDigest(); // For Gel Simulation
+            this.detectPathogens();
             
+            this.fetchLiterature(this.data.metadata.organism || this.data.metadata.title);
             this.updateDOM();
             this.setStatus("Pipeline execution completed.");
         } catch (err) {
@@ -688,44 +595,41 @@ const bioApp = {
         if(scan(this.pathologyMarkers.hairyRoot.markers)) this.data.pathology.hairyRoot = true;
     },
 
-    runDigest: function() {
-        const seq = this.data.sequence;
-        this.data.digest = [];
-        this.enzymes.forEach(enz => {
-            let cuts = []; let index = seq.indexOf(enz.site);
-            while (index !== -1) { cuts.push(index); index = seq.indexOf(enz.site, index + 1); }
-            let fragments = [];
-            if (cuts.length > 0) {
-                for (let i = 0; i < cuts.length - 1; i++) fragments.push(cuts[i+1] - cuts[i]);
-                fragments.push((seq.length - cuts[cuts.length - 1]) + cuts[0]);
-            } else fragments.push(seq.length);
-            fragments.sort((a,b) => b - a);
-            this.data.digest.push({ enzyme: enz.name, fragments: fragments });
-        });
-    },
-
-    simulateCloning: function() {
-        let e1 = document.getElementById('cloneE1').value;
-        let e2 = document.getElementById('cloneE2').value;
-        let orfIdx = document.getElementById('cloneInsert').value;
+    fetchLiterature: async function(queryTerm) {
+        const container = document.getElementById('papersContainer');
+        if(!queryTerm) return container.innerHTML = '<div style="color:var(--text-muted)">Insufficient data to find literature.</div>';
         
-        if(orfIdx === "" || e1 === "" || e2 === "") return alert("Please select an Insert and both Restriction Enzymes.");
+        container.innerHTML = '<div style="text-align:center; color:var(--warning);">Querying PubMed Database...</div>';
+        
+        try {
+            let res = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${queryTerm}&retmax=5&retmode=json&api_key=${API_KEY}`);
+            let data = await res.json();
+            
+            if(!data.esearchresult || data.esearchresult.idlist.length === 0) {
+                return container.innerHTML = '<div style="color:var(--text-muted)">No recent publications found for this specific organism.</div>';
+            }
 
-        let seq = this.data.sequence;
-        let insertDna = this.data.orfs[orfIdx].dna;
-
-        let cut1 = seq.indexOf(e1);
-        let cut2 = seq.indexOf(e2, cut1 + 1);
-
-        if(cut1 === -1 || cut2 === -1) return alert("Digestion Failed: Enzyme restriction sites not found in Vector backbone.");
-
-        let recombinant = seq.substring(0, cut1) + e1.substring(0, 3) + insertDna + e2.substring(3) + seq.substring(cut2 + e2.length);
-
-        let rGc = 0; for(let c of recombinant) if(c==='G'||c==='C') rGc++;
-        document.getElementById('cloneResSize').textContent = (recombinant.length / 1000).toFixed(2) + " kb";
-        document.getElementById('cloneResGc').textContent = ((rGc / recombinant.length) * 100).toFixed(1) + "%";
-        document.getElementById('cloneResSeq').textContent = recombinant.substring(0, 500) + "... [SEQUENCE TRUNCATED]";
-        document.getElementById('cloneResultCard').style.display = 'block';
+            let uids = data.esearchresult.idlist.join(',');
+            let sumRes = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${uids}&retmode=json&api_key=${API_KEY}`);
+            let sumData = await sumRes.json();
+            
+            container.innerHTML = '';
+            data.esearchresult.idlist.forEach(id => {
+                let paper = sumData.result[id];
+                let div = document.createElement('div');
+                div.className = 'paper-item';
+                div.innerHTML = `
+                    <div class="paper-title"><a href="https://pubmed.ncbi.nlm.nih.gov/${id}/" target="_blank" style="color:var(--primary); text-decoration:none;">${paper.title}</a></div>
+                    <div class="paper-meta">
+                        ${paper.authors ? paper.authors.map(a => a.name).join(', ') : 'Unknown Authors'} <br>
+                        <strong>${paper.source}</strong> | Published: ${paper.pubdate}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        } catch (e) {
+            container.innerHTML = '<div style="color:var(--danger)">Failed to load literature from PubMed.</div>';
+        }
     },
 
     calculatePrimers: function() {
@@ -809,13 +713,7 @@ const bioApp = {
 
         const orfTbody = document.getElementById('orfTable');
         const primerSel = document.getElementById('primerSelect');
-        const cloneInsertSel = document.getElementById('cloneInsert');
-        
-        orfTbody.innerHTML = ''; 
-        primerSel.innerHTML = '<option value="">-- Select Gene Target --</option>';
-        cloneInsertSel.innerHTML = '<option value="">-- Select Gene to Insert --</option>';
-
-        document.getElementById('cloneVectorName').textContent = this.data.accession;
+        orfTbody.innerHTML = ''; primerSel.innerHTML = '<option value="">-- Select Gene Target --</option>';
 
         this.data.orfs.slice(0, 15).forEach((orf, i) => {
             let tr = document.createElement('tr');
@@ -824,8 +722,7 @@ const bioApp = {
             
             let opt = document.createElement('option');
             opt.value = i; opt.textContent = `${orf.id} (${orf.dna.length} bp)`;
-            primerSel.appendChild(opt.cloneNode(true));
-            cloneInsertSel.appendChild(opt);
+            primerSel.appendChild(opt);
         });
 
         const cpgTbody = document.getElementById('cpgTable');
@@ -839,7 +736,6 @@ const bioApp = {
         });
 
         this.drawPlasmidMap();
-        if(document.getElementById('view-gel').classList.contains('active')) this.drawGel();
     }
 };
 
