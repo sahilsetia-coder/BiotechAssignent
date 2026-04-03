@@ -75,12 +75,15 @@
         .badge.neg { background: var(--success); color: #000; }
         .badge.pos { background: var(--danger); color: #fff; }
 
-        /* --- VISUALIZER MAP --- */
+        /* --- VISUALIZERS --- */
         .map-container { display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; position: relative; }
         #plasmidSvg { width: 100%; max-width: 400px; height: auto; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5)); }
         .arc-gene { cursor: pointer; transition: stroke-width 0.2s, filter 0.2s; }
         .arc-gene:hover { stroke-width: 25; filter: brightness(1.3); }
         #mapTooltip { position: absolute; background: rgba(15,23,42,0.95); border: 1px solid var(--primary); padding: 1rem; border-radius: 8px; font-size: 0.8rem; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 10; backdrop-filter: blur(4px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
+
+        /* 3D Canvas */
+        #dnaCanvas { width: 100%; height: 350px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1rem; box-shadow: inset 0 0 50px rgba(0,0,0,0.5); }
 
         /* --- TABLES & MISC --- */
         .table-container { overflow-x: auto; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; }
@@ -88,14 +91,11 @@
         th, td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
         th { background: rgba(0,0,0,0.2); color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; }
         .mono { font-family: var(--font-mono); }
-        .seq-box { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: var(--font-mono); font-size: 13px; color: var(--secondary); max-height: 400px; overflow-y: auto; overflow-x: auto; word-break: break-all; line-height: 1.6; }
-        
-        /* Code Source Specific */
-        .code-box { white-space: pre; color: #a5b4fc; word-break: normal; }
-        
+        .seq-box { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: var(--font-mono); font-size: 11px; color: var(--secondary); max-height: 250px; overflow-y: auto; word-break: break-all; line-height: 1.6; }
         .paper-item { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem; }
         .paper-title { color: var(--primary); font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
         .paper-meta { color: var(--text-muted); font-size: 0.8rem; }
+        .code-box { white-space: pre; color: #a5b4fc; word-break: normal; }
 
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -135,6 +135,7 @@
     <div class="nav-wrapper">
         <div class="nav-menu">
             <div class="nav-item active" onclick="bioApp.switchTab('dashboard', this)">Overview</div>
+            <div class="nav-item" onclick="bioApp.switchTab('dna', this)">🧬 3D DNA</div>
             <div class="nav-item" onclick="bioApp.switchTab('pathology', this)">🦠 Pathology</div>
             <div class="nav-item" onclick="bioApp.switchTab('map', this)">🗺️ Map</div>
             <div class="nav-item" onclick="bioApp.switchTab('dogma', this)">Central Dogma</div>
@@ -165,6 +166,19 @@
                     <div><strong style="color: white;">Definition:</strong> <span id="meta-def">---</span></div>
                     <div><strong style="color: white;">Organism:</strong> <span id="meta-org">---</span></div>
                 </div>
+            </div>
+        </div>
+
+        <div id="view-dna" class="view">
+            <h2 class="section-title">3D Double Helix Engine</h2>
+            <p class="section-desc">Real-time mathematically generated trigonometric visualization of the DNA backbone using HTML5 Canvas rendering.</p>
+            <canvas id="dnaCanvas"></canvas>
+            <div class="card">
+                <div class="card-label">Visualization Metrics</div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6;">
+                    The simulation dynamically calculates sine and cosine waves offset by &pi; (Pi) radians to plot the dual backbones. 
+                    The rendering engine scales the radius and opacity of the nucleotide nodes based on their simulated Z-axis depth to create a 3D illusion without utilizing heavy external WebGL libraries.
+                </p>
             </div>
         </div>
 
@@ -268,6 +282,7 @@ const bioApp = {
     data: { accession: "", sequence: "", metadata: null, orfs: [], cpgIslands: [], pathology: {} },
     hintTimeout: null,
     sourceLoaded: false,
+    dnaAnimationId: null,
 
     pathologyMarkers: {
         crownGall: { name: "Crown Gall Disease (Ti Plasmid)", markers: ["GATCCGTC", "ATGCCTGC", "TCGATGTC"] }, 
@@ -304,30 +319,89 @@ const bioApp = {
         document.getElementById(`view-${viewId}`).classList.add('active');
         btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         
-        // Load source code only when tab is clicked
         if(viewId === 'source') this.loadSourceCode();
+        if(viewId === 'dna') this.startDNA(); else this.stopDNA(); // Save CPU when not looking at DNA
     },
 
-    // --- NEW: FETCH OWN SOURCE CODE ---
+    // --- CANVAS 3D DNA RENDERER ---
+    startDNA: function() {
+        if(this.dnaAnimationId) return; // already running
+        const canvas = document.getElementById('dnaCanvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = canvas.parentElement.clientWidth;
+        let height = canvas.height = 350;
+        let angle = 0;
+
+        const drawNode = (x, y, scale, color) => {
+            ctx.beginPath();
+            ctx.arc(x, y, 2 + scale * 5, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        };
+
+        const render = () => {
+            ctx.clearRect(0, 0, width, height);
+            
+            let centerY = height / 2;
+            let amplitude = 60;
+            let frequency = 0.02;
+            let spacing = 18;
+
+            for (let i = 0; i < width; i += spacing) {
+                // Math for double helix structure
+                let y1 = centerY + Math.sin(i * frequency + angle) * amplitude;
+                let y2 = centerY + Math.sin(i * frequency + angle + Math.PI) * amplitude;
+                
+                // Scale simulates Z-depth
+                let scale1 = (Math.cos(i * frequency + angle) + 1) / 2;
+                let scale2 = (Math.cos(i * frequency + angle + Math.PI) + 1) / 2;
+
+                // Connecting bonds
+                ctx.beginPath();
+                ctx.moveTo(i, y1);
+                ctx.lineTo(i, y2);
+                ctx.strokeStyle = `rgba(56, 189, 248, ${0.1 + scale1 * 0.2})`;
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Draw back strand first, then front strand for correct overlapping
+                if (scale1 < scale2) {
+                    drawNode(i, y1, scale1, '#818cf8'); // back
+                    drawNode(i, y2, scale2, '#38bdf8'); // front
+                } else {
+                    drawNode(i, y2, scale2, '#38bdf8'); // back
+                    drawNode(i, y1, scale1, '#818cf8'); // front
+                }
+            }
+            angle += 0.04; // Rotation speed
+            this.dnaAnimationId = requestAnimationFrame(render);
+        };
+        render();
+    },
+
+    stopDNA: function() {
+        if(this.dnaAnimationId) {
+            cancelAnimationFrame(this.dnaAnimationId);
+            this.dnaAnimationId = null;
+        }
+    },
+
     loadSourceCode: async function() {
         if(this.sourceLoaded) return;
         try {
             let res = await fetch(window.location.href);
             let text = await res.text();
-            // Escape HTML so it displays as code, not as actual rendered elements
             text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             document.getElementById('sourceCodeViewer').innerHTML = text;
             this.sourceLoaded = true;
         } catch (e) {
-            document.getElementById('sourceCodeViewer').textContent = "// Could not load source code locally due to browser security.\n// Please view this on a hosted live server (like Vercel or GitHub Pages) to see the source.";
+            document.getElementById('sourceCodeViewer').textContent = "// Cannot load source code locally due to browser CORS policies.\n// Please host on Vercel/GitHub Pages to view.";
         }
     },
 
     copySource: function() {
         const code = document.getElementById('sourceCodeViewer').innerText;
-        navigator.clipboard.writeText(code).then(() => {
-            alert("✅ Source code copied to clipboard!");
-        }).catch(err => alert("Failed to copy text."));
+        navigator.clipboard.writeText(code).then(() => alert("✅ Source code copied!")).catch(err => alert("Failed to copy."));
     },
 
     setStatus: function(msg) {
@@ -639,6 +713,14 @@ const bioApp = {
 document.addEventListener('click', (e) => {
     if(!document.querySelector('.search-wrapper').contains(e.target)) {
         document.getElementById('autocompleteBox').style.display = 'none';
+    }
+});
+
+// Handle window resizing for DNA Canvas
+window.addEventListener('resize', () => {
+    if(document.getElementById('view-dna').classList.contains('active')) {
+        const canvas = document.getElementById('dnaCanvas');
+        canvas.width = canvas.parentElement.clientWidth;
     }
 });
 </script>
