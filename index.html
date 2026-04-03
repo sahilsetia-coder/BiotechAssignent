@@ -28,7 +28,6 @@
         .submission-badge strong { color: var(--primary); display: block; font-size: 0.85rem; margin-bottom: 2px;}
         .submission-badge span { color: var(--text-muted); display: block;}
         
-        /* NEW: PPT Button Styles */
         .btn-ppt { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 12px; background: rgba(251, 191, 36, 0.15); color: var(--warning); border: 1px solid var(--warning); border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 700; transition: var(--transition); }
         .btn-ppt:hover { background: var(--warning); color: #000; transform: translateY(-1px); }
 
@@ -89,7 +88,11 @@
         th, td { padding: 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
         th { background: rgba(0,0,0,0.2); color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; }
         .mono { font-family: var(--font-mono); }
-        .seq-box { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: var(--font-mono); font-size: 11px; color: var(--secondary); max-height: 250px; overflow-y: auto; word-break: break-all; line-height: 1.6; }
+        .seq-box { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: var(--font-mono); font-size: 13px; color: var(--secondary); max-height: 400px; overflow-y: auto; overflow-x: auto; word-break: break-all; line-height: 1.6; }
+        
+        /* Code Source Specific */
+        .code-box { white-space: pre; color: #a5b4fc; word-break: normal; }
+        
         .paper-item { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem; }
         .paper-title { color: var(--primary); font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
         .paper-meta { color: var(--text-muted); font-size: 0.8rem; }
@@ -138,6 +141,7 @@
             <div class="nav-item" onclick="bioApp.switchTab('epigenetics', this)">Epigenetics</div>
             <div class="nav-item" onclick="bioApp.switchTab('tools', this)">Thermodynamics</div>
             <div class="nav-item" onclick="bioApp.switchTab('literature', this)">📚 Literature</div>
+            <div class="nav-item" onclick="bioApp.switchTab('source', this)" style="color: var(--success);">💻 Source Code</div>
         </div>
     </div>
 
@@ -167,17 +171,8 @@
         <div id="view-pathology" class="view">
             <h2 class="section-title">Pathogenicity Diagnostics</h2>
             <p class="section-desc">Scans the sequence for highly conserved oncogenes and virulence markers associated with Agrobacterium infections.</p>
-            
             <div id="pathologyResults">
                 <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Run pipeline to perform diagnostic scan...</div>
-            </div>
-
-            <div class="card" style="margin-top: 2rem;">
-                <div class="card-label">Diagnostic Biomarkers</div>
-                <ul style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; margin-left: 20px; line-height: 1.6;">
-                    <li><strong>Crown Gall (Ti Plasmid):</strong> Detects presence of <i>ipt</i> (isopentenyl transferase) and <i>virD2</i> markers.</li>
-                    <li><strong>Hairy Root (Ri Plasmid):</strong> Detects presence of <i>rolB</i> and <i>rolC</i> (root locus) markers.</li>
-                </ul>
             </div>
         </div>
 
@@ -253,6 +248,17 @@
             </div>
         </div>
 
+        <div id="view-source" class="view">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <div>
+                    <h2 class="section-title">Application Source Code</h2>
+                    <p class="section-desc" style="margin-bottom: 0;">Open-source transparency. View the complete HTML, CSS, and JS powering this tool.</p>
+                </div>
+                <button class="btn" style="background: var(--success); padding: 8px 16px; font-size: 0.85rem;" onclick="bioApp.copySource()">📋 Copy Code</button>
+            </div>
+            <div class="seq-box code-box" id="sourceCodeViewer">Loading source code...</div>
+        </div>
+
     </main>
 
 <script>
@@ -261,6 +267,7 @@ const API_KEY = "52045ffc554ccc9ed245da43bee911cd8409";
 const bioApp = {
     data: { accession: "", sequence: "", metadata: null, orfs: [], cpgIslands: [], pathology: {} },
     hintTimeout: null,
+    sourceLoaded: false,
 
     pathologyMarkers: {
         crownGall: { name: "Crown Gall Disease (Ti Plasmid)", markers: ["GATCCGTC", "ATGCCTGC", "TCGATGTC"] }, 
@@ -296,6 +303,31 @@ const bioApp = {
         document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
         document.getElementById(`view-${viewId}`).classList.add('active');
         btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        
+        // Load source code only when tab is clicked
+        if(viewId === 'source') this.loadSourceCode();
+    },
+
+    // --- NEW: FETCH OWN SOURCE CODE ---
+    loadSourceCode: async function() {
+        if(this.sourceLoaded) return;
+        try {
+            let res = await fetch(window.location.href);
+            let text = await res.text();
+            // Escape HTML so it displays as code, not as actual rendered elements
+            text = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            document.getElementById('sourceCodeViewer').innerHTML = text;
+            this.sourceLoaded = true;
+        } catch (e) {
+            document.getElementById('sourceCodeViewer').textContent = "// Could not load source code locally due to browser security.\n// Please view this on a hosted live server (like Vercel or GitHub Pages) to see the source.";
+        }
+    },
+
+    copySource: function() {
+        const code = document.getElementById('sourceCodeViewer').innerText;
+        navigator.clipboard.writeText(code).then(() => {
+            alert("✅ Source code copied to clipboard!");
+        }).catch(err => alert("Failed to copy text."));
     },
 
     setStatus: function(msg) {
@@ -566,7 +598,6 @@ const bioApp = {
         document.getElementById('meta-def').textContent = m.title || "Unknown";
         document.getElementById('meta-org').textContent = m.organism || "Unknown";
 
-        // Render Pathology
         const pathRes = document.getElementById('pathologyResults');
         pathRes.innerHTML = '';
         const renderAlert = (title, desc, isPos) => `
