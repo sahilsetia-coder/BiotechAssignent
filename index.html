@@ -85,7 +85,7 @@
         /* 3D Canvas & Gel Canvas */
         .canvas-container { width: 100%; overflow-x: auto; background: #000; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1rem; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); }
         #dnaCanvas { width: 100%; height: 350px; cursor: crosshair; }
-        #gelCanvas { height: 450px; min-width: 600px; } /* Gel needs width for lanes */
+        #gelCanvas { height: 450px; min-width: 600px; } 
 
         /* --- TABLES & MISC --- */
         .table-container { overflow-x: auto; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; }
@@ -137,6 +137,7 @@
     <div class="nav-wrapper">
         <div class="nav-menu">
             <div class="nav-item active" onclick="bioApp.switchTab('dashboard', this)">Overview</div>
+            <div class="nav-item" onclick="bioApp.switchTab('blast', this)">💥 Live BLAST</div>
             <div class="nav-item" onclick="bioApp.switchTab('dna', this)">🧬 3D DNA</div>
             <div class="nav-item" onclick="bioApp.switchTab('map', this)">🗺️ Plasmid Map</div>
             <div class="nav-item" onclick="bioApp.switchTab('gel', this)">🧫 Gel Electrophoresis</div>
@@ -173,19 +174,31 @@
             </div>
         </div>
 
+        <div id="view-blast" class="view">
+            <h2 class="section-title">Live NCBI BLAST Integration</h2>
+            <p class="section-desc">Transmit identified sequences directly to the NCBI supercomputing cluster for homology matching.</p>
+            
+            <div class="card">
+                <span class="card-label" style="color: var(--primary);">1. Select Target Gene</span>
+                <select id="blastSelect" style="margin-bottom: 1rem;">
+                    <option value="">-- Load sequence first --</option>
+                </select>
+                
+                <span class="card-label" style="color: var(--warning);">2. Select Alignment Program</span>
+                <select id="blastProgram" style="margin-bottom: 1.5rem;">
+                    <option value="blastp">BLASTp (Protein to Protein Database) - Recommended</option>
+                    <option value="blastn">BLASTn (Nucleotide to Nucleotide Database)</option>
+                </select>
+                
+                <button class="btn" style="width: 100%; background: var(--warning); color: #000;" onclick="bioApp.submitBlast()">🚀 Transmit to NCBI Cluster</button>
+            </div>
+        </div>
+
         <div id="view-dna" class="view">
             <h2 class="section-title">3D Double Helix Engine</h2>
             <p class="section-desc">Real-time mathematically generated trigonometric visualization of ATGC base pairs.</p>
             <div class="canvas-container" style="overflow: hidden;">
                 <canvas id="dnaCanvas"></canvas>
-            </div>
-            <div class="card">
-                <div class="card-label">Nucleotide Base Pairing (ATGC)</div>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6;">
-                    The engine utilizes Canvas API to render Purine and Pyrimidine structures. 
-                    <strong style="color: #f43f5e;">Adenine (A)</strong> perfectly pairs with <strong style="color: #38bdf8;">Thymine (T)</strong>, 
-                    and <strong style="color: #34d399;">Guanine (G)</strong> pairs with <strong style="color: #fbbf24;">Cytosine (C)</strong>. 
-                </p>
             </div>
         </div>
 
@@ -209,34 +222,21 @@
         <div id="view-gel" class="view">
             <h2 class="section-title">UV Gel Electrophoresis Simulator</h2>
             <p class="section-desc">Mathematically simulates restriction digest migration through an agarose gel under UV illumination.</p>
-            
             <div class="canvas-container">
                 <canvas id="gelCanvas" width="800" height="450"></canvas>
-            </div>
-            
-            <div class="card">
-                <div class="card-label">Electrophoresis Physics Engine</div>
-                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6;">
-                    The system performs an in-silico restriction digest using standard enzymes (EcoRI, BamHI, HindIII). 
-                    The vertical migration distance of each fragment is calculated logarithmically ($Distance \propto \log(Size)$), 
-                    mirroring how smaller DNA fragments move faster through the porous agarose matrix toward the positive electrode.
-                </p>
             </div>
         </div>
 
         <div id="view-cloning" class="view">
             <h2 class="section-title">Virtual Cloning Lab</h2>
             <p class="section-desc">Simulate restriction digestion and ligation to create a recombinant plasmid.</p>
-            
             <div class="card">
                 <span class="card-label" style="color: var(--primary);">1. Select Vector Backbone</span>
                 <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
                     Currently loaded sequence (<span id="cloneVectorName" class="mono">---</span>) will be used as the backbone.
                 </div>
-
                 <span class="card-label" style="color: var(--success);">2. Select Insert (Gene of Interest)</span>
                 <select id="cloneInsert" style="margin-bottom: 1rem;"><option value="">-- Load sequence first --</option></select>
-
                 <span class="card-label" style="color: var(--warning);">3. Select Restriction Enzymes</span>
                 <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
                     <select id="cloneE1" style="flex: 1;"><option value="">-- 5' Enzyme --</option><option value="GAATTC">EcoRI</option><option value="GGATCC">BamHI</option><option value="AAGCTT">HindIII</option></select>
@@ -244,7 +244,6 @@
                 </div>
                 <button class="btn" style="width: 100%;" onclick="bioApp.simulateCloning()">Simulate Ligation</button>
             </div>
-
             <div id="cloneResultCard" class="card" style="display: none; border-color: var(--success);">
                 <span class="card-label" style="color: var(--success);">Recombinant Plasmid Generated</span>
                 <div class="grid-stats" style="margin-top: 1rem; margin-bottom: 1rem;">
@@ -292,21 +291,16 @@
             <select id="primerSelect" style="width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: white; margin-bottom: 1.5rem;" onchange="bioApp.calculatePrimers()">
                 <option value="">-- Select Gene Target --</option>
             </select>
-
             <div id="primerResults" style="display: none; gap: 1rem; flex-direction: column;">
                 <div class="card" style="border-left: 4px solid var(--primary);">
                     <div class="card-label" style="color: var(--primary);">Forward Primer (5' → 3')</div>
                     <div id="fwdSeq" class="mono" style="font-size: 1.1rem; margin: 10px 0;">---</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;">
-                        <span>Len: 20bp</span><span id="fwdGc">GC: 0%</span><strong id="fwdTm" style="color: var(--warning);">Tm: 0°C</strong>
-                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;"><span>Len: 20bp</span><span id="fwdGc">GC: 0%</span><strong id="fwdTm" style="color: var(--warning);">Tm: 0°C</strong></div>
                 </div>
                 <div class="card" style="border-left: 4px solid var(--success);">
                     <div class="card-label" style="color: var(--success);">Reverse Primer (5' → 3')</div>
                     <div id="revSeq" class="mono" style="font-size: 1.1rem; margin: 10px 0;">---</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;">
-                        <span>Len: 20bp</span><span id="revGc">GC: 0%</span><strong id="revTm" style="color: var(--warning);">Tm: 0°C</strong>
-                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;"><span>Len: 20bp</span><span id="revGc">GC: 0%</span><strong id="revTm" style="color: var(--warning);">Tm: 0°C</strong></div>
                 </div>
             </div>
         </div>
@@ -323,7 +317,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <div>
                     <h2 class="section-title">Application Source Code</h2>
-                    <p class="section-desc" style="margin-bottom: 0;">Open-source transparency. View the complete HTML, CSS, and JS powering this tool.</p>
+                    <p class="section-desc" style="margin-bottom: 0;">Open-source transparency. View the HTML, CSS, and JS.</p>
                 </div>
                 <button class="btn" style="background: var(--success); padding: 8px 16px; font-size: 0.85rem;" onclick="bioApp.copySource()">📋 Copy</button>
             </div>
@@ -387,7 +381,44 @@ const bioApp = {
         if(viewId === 'gel') this.drawGel();
     },
 
-    // --- CANVAS 3D DNA RENDERER ---
+    // --- NEW: BLAST SUBMISSION ENGINE ---
+    submitBlast: function() {
+        const idx = document.getElementById('blastSelect').value;
+        const prog = document.getElementById('blastProgram').value;
+        if(idx === "") return alert("Please select a gene to BLAST.");
+        
+        const gene = this.data.orfs[idx];
+        const sequence = prog === 'blastp' ? gene.protein : gene.dna;
+        const pageType = prog === 'blastp' ? 'Proteins' : 'Nucleotides';
+
+        // Create a dynamic form to bypass CORS and submit directly to NCBI UI
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = 'https://blast.ncbi.nlm.nih.gov/blast/Blast.cgi';
+        form.target = '_blank';
+
+        const params = {
+            CMD: 'Web',
+            PAGE: pageType,
+            PROGRAM: prog,
+            QUERY: sequence,
+            DATABASE: prog === 'blastp' ? 'nr' : 'nt',
+            JOB_TITLE: `BioWorkbench_${gene.id}`
+        };
+
+        for(const key in params) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = params[key];
+            form.appendChild(input);
+        }
+
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    },
+
     startDNA: function() {
         if(this.dnaAnimationId) return; 
         const canvas = document.getElementById('dnaCanvas');
@@ -408,7 +439,6 @@ const bioApp = {
             ctx.beginPath(); ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fillStyle = color; ctx.shadowBlur = 15; ctx.shadowColor = color; ctx.fill();
             ctx.shadowBlur = 0; 
-
             if (scale > 0.4) {
                 ctx.fillStyle = '#020617'; 
                 ctx.font = `bold ${8 + scale * 5}px var(--font-mono)`;
@@ -447,30 +477,26 @@ const bioApp = {
         if(this.dnaAnimationId) { cancelAnimationFrame(this.dnaAnimationId); this.dnaAnimationId = null; }
     },
 
-    // --- NEW: GEL ELECTROPHORESIS RENDERER ---
     drawGel: function() {
         const canvas = document.getElementById('gelCanvas');
         if(!canvas || !this.data.sequence) return;
         const ctx = canvas.getContext('2d');
-        const width = canvas.width = 800; // Fixed inner resolution
+        const width = canvas.width = 800; 
         const height = canvas.height = 450;
         
-        ctx.fillStyle = '#050505'; // Dark gel background
+        ctx.fillStyle = '#050505'; 
         ctx.fillRect(0, 0, width, height);
-
-        // Draw gel wells
         ctx.fillStyle = 'rgba(255,255,255,0.1)';
         for(let i=0; i<4; i++) { ctx.fillRect(100 + (i*180), 20, 60, 15); }
 
         const maxLog = Math.log10(this.data.sequence.length || 100000);
-        const minLog = Math.log10(100); // 100bp bottom cutoff
+        const minLog = Math.log10(100); 
         
-        // Logarithmic scale mapping function (DNA runs top to bottom)
         const getY = (size) => {
             if(size <= 0) return height;
             let logSize = Math.log10(size);
             let percent = (maxLog - logSize) / (maxLog - minLog);
-            return 50 + (percent * 350); // Margin top and bottom
+            return 50 + (percent * 350); 
         };
 
         const drawBand = (x, y, intensity, color) => {
@@ -478,32 +504,26 @@ const bioApp = {
             ctx.shadowColor = color;
             ctx.fillStyle = `rgba(${color}, ${0.5 + (intensity * 0.5)})`;
             ctx.fillRect(x, y, 60, 4);
-            ctx.shadowBlur = 0; // reset
+            ctx.shadowBlur = 0; 
         };
 
-        // Render Ladder (Lane 0)
         ctx.fillStyle = '#fff'; ctx.font = '12px monospace'; ctx.fillText('1kb Ladder', 100, 15);
         const ladderSizes = [10000, 8000, 6000, 5000, 4000, 3000, 2000, 1500, 1000, 500];
         ladderSizes.forEach(size => {
             let y = getY(size);
             if(y > 40 && y < height - 10) {
-                drawBand(100, y, 0.8, '100, 255, 100'); // Greenish ladder
+                drawBand(100, y, 0.8, '100, 255, 100'); 
                 ctx.fillStyle = 'rgba(255,255,255,0.5)';
                 ctx.fillText((size/1000)+'kb', 65, y+4);
             }
         });
 
-        // Render Enzyme Lanes
         this.data.digest.forEach((dig, i) => {
             let xOffset = 280 + (i * 180);
             ctx.fillStyle = '#fff'; ctx.fillText(dig.enzyme, xOffset, 15);
-            
-            // Draw bands
             dig.fragments.forEach(fragSize => {
                 let y = getY(fragSize);
-                if(y > 40 && y < height - 10) {
-                    drawBand(xOffset, y, 1.0, '56, 189, 248'); // Bright blue DNA bands
-                }
+                if(y > 40 && y < height - 10) { drawBand(xOffset, y, 1.0, '56, 189, 248'); }
             });
         });
     },
@@ -599,14 +619,14 @@ const bioApp = {
             this.data.sequence = lines.join('').replace(/\s/g, '').toUpperCase();
             this.data.accession = this.data.metadata.caption || input;
 
-            this.setStatus("Computing Biophysics & Pathology...");
+            this.setStatus("Computing Biophysics...");
             await new Promise(r => setTimeout(r, 50)); 
             
             this.computeStats();
             this.findORFsAndTranslate();
             this.mapCpGIslands();
             this.detectPathogens(); 
-            this.runDigest(); // For Gel Simulation
+            this.runDigest(); 
             
             this.updateDOM();
             this.setStatus("Pipeline execution completed.");
@@ -809,10 +829,12 @@ const bioApp = {
 
         const orfTbody = document.getElementById('orfTable');
         const primerSel = document.getElementById('primerSelect');
+        const blastSel = document.getElementById('blastSelect');
         const cloneInsertSel = document.getElementById('cloneInsert');
         
         orfTbody.innerHTML = ''; 
         primerSel.innerHTML = '<option value="">-- Select Gene Target --</option>';
+        blastSel.innerHTML = '<option value="">-- Select Target Gene --</option>';
         cloneInsertSel.innerHTML = '<option value="">-- Select Gene to Insert --</option>';
 
         document.getElementById('cloneVectorName').textContent = this.data.accession;
@@ -825,7 +847,8 @@ const bioApp = {
             let opt = document.createElement('option');
             opt.value = i; opt.textContent = `${orf.id} (${orf.dna.length} bp)`;
             primerSel.appendChild(opt.cloneNode(true));
-            cloneInsertSel.appendChild(opt);
+            cloneInsertSel.appendChild(opt.cloneNode(true));
+            blastSel.appendChild(opt);
         });
 
         const cpgTbody = document.getElementById('cpgTable');
