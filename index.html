@@ -34,11 +34,13 @@
         /* --- CONTROL PANEL & AUTOCOMPLETE --- */
         .control-panel { background: var(--bg-surface); padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 10px; z-index: 90; position: relative; }
         .search-wrapper { flex: 1; position: relative; }
-        input[type="text"], select { width: 100%; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-sans); font-size: 14px; transition: var(--transition); }
+        input[type="text"], select { width: 100%; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-sans); font-size: 14px; transition: var(--transition); margin-bottom:0; }
         input[type="text"]:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
         .btn { padding: 12px 24px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;}
         .btn:hover { background: #0ea5e9; transform: translateY(-1px); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline.active { background: var(--primary); color: #000; }
 
         .autocomplete-dropdown { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); z-index: 1000; display: none; max-height: 300px; overflow-y: auto; }
         .hint-item { padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
@@ -66,14 +68,25 @@
         .card-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; display: block; margin-bottom: 8px;}
         .card-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-top: 0.5rem; font-family: var(--font-mono); }
 
-        /* PATHOLOGY STYLES */
+        /* PATHOLOGY & AGROBACTERIUM STYLES */
         .pathology-alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid transparent; }
         .pathology-alert.negative { background: rgba(52, 211, 153, 0.1); border-left-color: var(--success); }
         .pathology-alert.positive { background: rgba(244, 63, 94, 0.1); border-left-color: var(--danger); }
-        .path-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between;}
+        .path-title { font-size: 1.1rem; font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between; align-items:center;}
         .badge { padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; text-transform: uppercase; font-weight: bold; }
         .badge.neg { background: var(--success); color: #000; }
         .badge.pos { background: var(--danger); color: #fff; }
+        
+        .agro-panel { display: none; padding-top: 1rem; }
+        .agro-panel.active { display: block; animation: fadeUp 0.3s ease; }
+        .feature-list li { margin-bottom: 8px; font-size: 0.9rem; color: var(--text-muted); line-height: 1.4; }
+        .feature-list strong { color: var(--primary); }
+
+        /* Transform Stepper */
+        .stepper { display: flex; flex-direction: column; gap: 1rem; }
+        .step-item { background: rgba(255,255,255,0.03); border: 1px solid var(--border); padding: 1rem; border-radius: 8px; display: flex; gap: 1rem; opacity: 0.5; transition: var(--transition); cursor: pointer; }
+        .step-item.active { opacity: 1; border-color: var(--primary); background: rgba(56, 189, 248, 0.05); }
+        .step-num { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
 
         /* --- VISUALIZERS --- */
         .map-container { display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; position: relative; }
@@ -82,7 +95,6 @@
         .arc-gene:hover { stroke-width: 25; filter: brightness(1.3); }
         #mapTooltip { position: absolute; background: rgba(15,23,42,0.95); border: 1px solid var(--primary); padding: 1rem; border-radius: 8px; font-size: 0.8rem; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 10; backdrop-filter: blur(4px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
 
-        /* 3D Canvas & Gel Canvas */
         .canvas-container { width: 100%; overflow-x: auto; background: #000; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1rem; box-shadow: inset 0 0 50px rgba(0,0,0,0.8); }
         #dnaCanvas { width: 100%; height: 350px; cursor: crosshair; }
         #gelCanvas { height: 450px; min-width: 600px; } 
@@ -137,6 +149,7 @@
     <div class="nav-wrapper">
         <div class="nav-menu">
             <div class="nav-item active" onclick="bioApp.switchTab('dashboard', this)">Overview</div>
+            <div class="nav-item" onclick="bioApp.switchTab('agro101', this)" style="color: var(--warning);">📘 Agrobacterium 101</div>
             <div class="nav-item" onclick="bioApp.switchTab('blast', this)">💥 Live BLAST</div>
             <div class="nav-item" onclick="bioApp.switchTab('dna', this)">🧬 3D DNA</div>
             <div class="nav-item" onclick="bioApp.switchTab('map', this)">🗺️ Plasmid Map</div>
@@ -174,22 +187,106 @@
             </div>
         </div>
 
+        <div id="view-agro101" class="view">
+            <h2 class="section-title">Agrobacterium Biology</h2>
+            <p class="section-desc">Interactive textbook covering plasmids, diseases, and gene transformation.</p>
+            
+            <div style="display:flex; gap:10px; margin-bottom: 1rem; overflow-x:auto;">
+                <button class="btn btn-outline active" id="btn-agro-disease" onclick="bioApp.switchAgroTab('disease')">🦠 Diseases</button>
+                <button class="btn btn-outline" id="btn-agro-plasmid" onclick="bioApp.switchAgroTab('plasmid')">🧬 Ti Plasmid</button>
+                <button class="btn btn-outline" id="btn-agro-transform" onclick="bioApp.switchAgroTab('transform')">⚙️ Transformation</button>
+            </div>
+
+            <div id="agro-disease" class="agro-panel active">
+                <div class="grid-stats" style="grid-template-columns: 1fr 1fr;">
+                    <div class="card" style="border-top: 4px solid var(--danger);">
+                        <h3 style="color: var(--danger); margin-bottom: 10px;">Agrobacterium tumefaciens</h3>
+                        <div class="card-label">Crown Gall Disease</div>
+                        <ul class="feature-list" style="margin-top: 10px; padding-left: 15px;">
+                            <li><strong>Plasmid:</strong> Tumor-inducing (Ti) Plasmid.</li>
+                            <li><strong>Mechanism:</strong> Transfers T-DNA carrying <i>ipt</i> and <i>iaaM</i> genes, forcing the plant to overproduce auxins and cytokinins.</li>
+                            <li><strong>Symptoms:</strong> Massive, unregulated cell division resulting in tumor-like growths (galls) typically at the crown of the plant.</li>
+                            <li><strong>Nutrient Hijacking:</strong> Forces the plant to produce Opines, which only the bacterium can metabolize.</li>
+                        </ul>
+                    </div>
+                    <div class="card" style="border-top: 4px solid var(--success);">
+                        <h3 style="color: var(--success); margin-bottom: 10px;">Agrobacterium rhizogenes</h3>
+                        <div class="card-label">Hairy Root Disease</div>
+                        <ul class="feature-list" style="margin-top: 10px; padding-left: 15px;">
+                            <li><strong>Plasmid:</strong> Root-inducing (Ri) Plasmid.</li>
+                            <li><strong>Mechanism:</strong> Transfers T-DNA carrying the <i>rol</i> gene family (rolA, rolB, rolC, rolD).</li>
+                            <li><strong>Symptoms:</strong> Extreme hypersensitivity to endogenous auxins, resulting in massive, uncontrolled proliferation of adventitious roots at the infection site.</li>
+                            <li><strong>Biotech Use:</strong> Used to create highly branched root cultures in labs to harvest valuable secondary metabolites.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="agro-plasmid" class="agro-panel">
+                <div class="card">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">Ti Plasmid Components & Vector Map</h3>
+                    <div class="grid-stats">
+                        <div>
+                            <div class="card-label" style="color: var(--warning);">1. T-DNA Region (Transfer DNA)</div>
+                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">The only segment transferred to the plant. Flanked by 25bp Left and Right Borders. Contains oncogenes (auxin/cytokinin) and opine synthesis genes.</p>
+                            
+                            <div class="card-label" style="color: var(--danger);">2. Virulence (vir) Region</div>
+                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">Essential genes (virA to virG) that act as the "delivery machinery". They sense plant wounds, cut the T-DNA, and form the transfer channel.</p>
+                        </div>
+                        <div>
+                            <div class="card-label" style="color: var(--success);">3. Origin of Replication (ori)</div>
+                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5; margin-bottom:10px;">Allows the plasmid to replicate independently within the Agrobacterium cell, ensuring it is passed to daughter cells.</p>
+                            
+                            <div class="card-label" style="color: var(--secondary);">4. Opine Catabolism</div>
+                            <p style="font-size:0.85rem; color:var(--text-muted); line-height:1.5;">Genes located outside the T-DNA that remain in the bacterium, allowing it to digest the specific opines produced by the plant tumor.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="agro-transform" class="agro-panel">
+                <div class="card">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">Agrobacterium-Mediated Gene Transformation</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Click through the steps to learn the biological mechanism of T-DNA transfer.</p>
+                    
+                    <div class="stepper">
+                        <div class="step-item active" onclick="bioApp.activateStep(this)">
+                            <div class="step-num">1</div>
+                            <div><strong style="color:white;">Chemotaxis & Attachment:</strong> Wounded plant cells release phenolic compounds (e.g., acetosyringone). The bacterium senses these chemical signals and attaches to the plant cell wall.</div>
+                        </div>
+                        <div class="step-item" onclick="bioApp.activateStep(this)">
+                            <div class="step-num">2</div>
+                            <div><strong style="color:white;">Vir Gene Activation:</strong> The VirA receptor protein senses the phenolics, autophosphorylates, and transfers the phosphate to VirG. VirG then turns on the transcription of the rest of the <i>vir</i> operon.</div>
+                        </div>
+                        <div class="step-item" onclick="bioApp.activateStep(this)">
+                            <div class="step-num">3</div>
+                            <div><strong style="color:white;">T-DNA Processing:</strong> The VirD1/VirD2 endonuclease complex recognizes the 25bp Right Border, nicks the DNA, and peels off a single-stranded copy of the T-DNA. VirD2 remains attached to the 5' end to protect it.</div>
+                        </div>
+                        <div class="step-item" onclick="bioApp.activateStep(this)">
+                            <div class="step-num">4</div>
+                            <div><strong style="color:white;">Transfer (Type IV Secretion):</strong> The VirB operon builds a channel (pilus) connecting the bacterium to the plant cell. The VirD2-T-DNA complex is pumped through this channel into the plant cytoplasm.</div>
+                        </div>
+                        <div class="step-item" onclick="bioApp.activateStep(this)">
+                            <div class="step-num">5</div>
+                            <div><strong style="color:white;">Nuclear Integration:</strong> VirE2 proteins coat the single-stranded DNA to protect it from plant nucleases. The complex enters the plant nucleus and inserts itself into the plant chromosome via illegitimate recombination.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="view-blast" class="view">
             <h2 class="section-title">Live NCBI BLAST Integration</h2>
             <p class="section-desc">Transmit identified sequences directly to the NCBI supercomputing cluster for homology matching.</p>
             
             <div class="card">
                 <span class="card-label" style="color: var(--primary);">1. Select Target Gene</span>
-                <select id="blastSelect" style="margin-bottom: 1rem;">
-                    <option value="">-- Load sequence first --</option>
-                </select>
-                
+                <select id="blastSelect" style="margin-bottom: 1rem;"><option value="">-- Load sequence first --</option></select>
                 <span class="card-label" style="color: var(--warning);">2. Select Alignment Program</span>
                 <select id="blastProgram" style="margin-bottom: 1.5rem;">
                     <option value="blastp">BLASTp (Protein to Protein Database) - Recommended</option>
                     <option value="blastn">BLASTn (Nucleotide to Nucleotide Database)</option>
                 </select>
-                
                 <button class="btn" style="width: 100%; background: var(--warning); color: #000;" onclick="bioApp.submitBlast()">🚀 Transmit to NCBI Cluster</button>
             </div>
         </div>
@@ -197,9 +294,7 @@
         <div id="view-dna" class="view">
             <h2 class="section-title">3D Double Helix Engine</h2>
             <p class="section-desc">Real-time mathematically generated trigonometric visualization of ATGC base pairs.</p>
-            <div class="canvas-container" style="overflow: hidden;">
-                <canvas id="dnaCanvas"></canvas>
-            </div>
+            <div class="canvas-container" style="overflow: hidden;"><canvas id="dnaCanvas"></canvas></div>
         </div>
 
         <div id="view-map" class="view">
@@ -222,9 +317,7 @@
         <div id="view-gel" class="view">
             <h2 class="section-title">UV Gel Electrophoresis Simulator</h2>
             <p class="section-desc">Mathematically simulates restriction digest migration through an agarose gel under UV illumination.</p>
-            <div class="canvas-container">
-                <canvas id="gelCanvas" width="800" height="450"></canvas>
-            </div>
+            <div class="canvas-container"><canvas id="gelCanvas" width="800" height="450"></canvas></div>
         </div>
 
         <div id="view-cloning" class="view">
@@ -232,9 +325,7 @@
             <p class="section-desc">Simulate restriction digestion and ligation to create a recombinant plasmid.</p>
             <div class="card">
                 <span class="card-label" style="color: var(--primary);">1. Select Vector Backbone</span>
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                    Currently loaded sequence (<span id="cloneVectorName" class="mono">---</span>) will be used as the backbone.
-                </div>
+                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">Currently loaded sequence (<span id="cloneVectorName" class="mono">---</span>) will be used as the backbone.</div>
                 <span class="card-label" style="color: var(--success);">2. Select Insert (Gene of Interest)</span>
                 <select id="cloneInsert" style="margin-bottom: 1rem;"><option value="">-- Load sequence first --</option></select>
                 <span class="card-label" style="color: var(--warning);">3. Select Restriction Enzymes</span>
@@ -381,7 +472,19 @@ const bioApp = {
         if(viewId === 'gel') this.drawGel();
     },
 
-    // --- NEW: BLAST SUBMISSION ENGINE ---
+    // Agrobacterium 101 Methods
+    switchAgroTab: function(panelId) {
+        document.querySelectorAll('#view-agro101 .btn-outline').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-agro-' + panelId).classList.add('active');
+        document.querySelectorAll('.agro-panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('agro-' + panelId).classList.add('active');
+    },
+
+    activateStep: function(el) {
+        document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+    },
+
     submitBlast: function() {
         const idx = document.getElementById('blastSelect').value;
         const prog = document.getElementById('blastProgram').value;
@@ -391,32 +494,23 @@ const bioApp = {
         const sequence = prog === 'blastp' ? gene.protein : gene.dna;
         const pageType = prog === 'blastp' ? 'Proteins' : 'Nucleotides';
 
-        // Create a dynamic form to bypass CORS and submit directly to NCBI UI
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = 'https://blast.ncbi.nlm.nih.gov/blast/Blast.cgi';
         form.target = '_blank';
 
         const params = {
-            CMD: 'Web',
-            PAGE: pageType,
-            PROGRAM: prog,
-            QUERY: sequence,
-            DATABASE: prog === 'blastp' ? 'nr' : 'nt',
-            JOB_TITLE: `BioWorkbench_${gene.id}`
+            CMD: 'Web', PAGE: pageType, PROGRAM: prog, QUERY: sequence,
+            DATABASE: prog === 'blastp' ? 'nr' : 'nt', JOB_TITLE: `BioWorkbench_${gene.id}`
         };
 
         for(const key in params) {
             const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = params[key];
+            input.type = 'hidden'; input.name = key; input.value = params[key];
             form.appendChild(input);
         }
 
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
+        document.body.appendChild(form); form.submit(); document.body.removeChild(form);
     },
 
     startDNA: function() {
@@ -440,10 +534,8 @@ const bioApp = {
             ctx.fillStyle = color; ctx.shadowBlur = 15; ctx.shadowColor = color; ctx.fill();
             ctx.shadowBlur = 0; 
             if (scale > 0.4) {
-                ctx.fillStyle = '#020617'; 
-                ctx.font = `bold ${8 + scale * 5}px var(--font-mono)`;
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(letter, x, y);
+                ctx.fillStyle = '#020617'; ctx.font = `bold ${8 + scale * 5}px var(--font-mono)`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(letter, x, y);
             }
         };
 
@@ -484,8 +576,7 @@ const bioApp = {
         const width = canvas.width = 800; 
         const height = canvas.height = 450;
         
-        ctx.fillStyle = '#050505'; 
-        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, width, height);
         ctx.fillStyle = 'rgba(255,255,255,0.1)';
         for(let i=0; i<4; i++) { ctx.fillRect(100 + (i*180), 20, 60, 15); }
 
@@ -500,11 +591,9 @@ const bioApp = {
         };
 
         const drawBand = (x, y, intensity, color) => {
-            ctx.shadowBlur = 10 * intensity;
-            ctx.shadowColor = color;
+            ctx.shadowBlur = 10 * intensity; ctx.shadowColor = color;
             ctx.fillStyle = `rgba(${color}, ${0.5 + (intensity * 0.5)})`;
-            ctx.fillRect(x, y, 60, 4);
-            ctx.shadowBlur = 0; 
+            ctx.fillRect(x, y, 60, 4); ctx.shadowBlur = 0; 
         };
 
         ctx.fillStyle = '#fff'; ctx.font = '12px monospace'; ctx.fillText('1kb Ladder', 100, 15);
@@ -513,8 +602,7 @@ const bioApp = {
             let y = getY(size);
             if(y > 40 && y < height - 10) {
                 drawBand(100, y, 0.8, '100, 255, 100'); 
-                ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                ctx.fillText((size/1000)+'kb', 65, y+4);
+                ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillText((size/1000)+'kb', 65, y+4);
             }
         });
 
@@ -619,7 +707,7 @@ const bioApp = {
             this.data.sequence = lines.join('').replace(/\s/g, '').toUpperCase();
             this.data.accession = this.data.metadata.caption || input;
 
-            this.setStatus("Computing Biophysics...");
+            this.setStatus("Computing Biophysics & Pathology...");
             await new Promise(r => setTimeout(r, 50)); 
             
             this.computeStats();
@@ -628,6 +716,7 @@ const bioApp = {
             this.detectPathogens(); 
             this.runDigest(); 
             
+            this.fetchLiterature(this.data.metadata.organism || this.data.metadata.title);
             this.updateDOM();
             this.setStatus("Pipeline execution completed.");
         } catch (err) {
