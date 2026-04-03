@@ -325,84 +325,90 @@ const bioApp = {
         if(viewId === 'dna') this.startDNA(); else this.stopDNA(); 
     },
 
-    // --- ENHANCED CANVAS 3D DNA RENDERER WITH ATGC ---
+    // --- ENHANCED 3D GENE ENGINE (MATHEMATICAL PROJECTION) ---
     startDNA: function() {
         if(this.dnaAnimationId) return; 
         const canvas = document.getElementById('dnaCanvas');
         const ctx = canvas.getContext('2d');
         let width = canvas.width = canvas.parentElement.clientWidth;
         let height = canvas.height = 350;
-        let angle = 0;
+        
+        let rotation = 0;
+        let mouseX = 0, mouseY = 0;
 
-        // Base Pair Biological Definitions
-        const pairs = [
-            { b1: 'A', c1: '#f43f5e', b2: 'T', c2: '#38bdf8' }, // A (Red) pairs with T (Blue)
-            { b1: 'T', c1: '#38bdf8', b2: 'A', c2: '#f43f5e' }, // T pairs with A
-            { b1: 'G', c1: '#34d399', b2: 'C', c2: '#fbbf24' }, // G (Green) pairs with C (Yellow)
-            { b1: 'C', c1: '#fbbf24', b2: 'G', c2: '#34d399' }  // C pairs with G
-        ];
-
-        const drawNode = (x, y, scale, color, letter) => {
-            let radius = 4 + scale * 8;
-            
-            // Draw Glowing Molecule
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, Math.PI * 2);
-            ctx.fillStyle = color;
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = color;
-            ctx.fill();
-            ctx.shadowBlur = 0; // Reset shadow for text
-
-            // Draw Typography if molecule is in the foreground
-            if (scale > 0.4) {
-                ctx.fillStyle = '#020617'; // Dark background color for text contrast
-                ctx.font = `bold ${8 + scale * 5}px var(--font-mono)`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(letter, x, y);
-            }
+        canvas.onmousemove = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = (e.clientX - rect.left - width/2) / 150;
+            mouseY = (e.clientY - rect.top - height/2) / 150;
         };
+
+        const pairs = [
+            { b1: 'A', c1: '#f43f5e', b2: 'T', c2: '#38bdf8' },
+            { b1: 'G', c1: '#34d399', b2: 'C', c2: '#fbbf24' }
+        ];
 
         const render = () => {
             ctx.clearRect(0, 0, width, height);
             
-            let centerY = height / 2;
-            let amplitude = 70; // Width of the helix
-            let frequency = 0.025; // Tightness of the twists
-            let spacing = 28; // Space between base pairs
+            const spacing = 26; 
+            const radius = 65;  
+            const perspective = 500; 
+            
+            for (let y = -height/2 + 20; y < height/2 - 20; y += spacing) {
+                const grooveOffset = Math.PI * 0.7; 
+                const angle1 = (y * 0.012) + rotation;
+                const angle2 = angle1 + grooveOffset;
 
-            for (let i = 0; i < width; i += spacing) {
-                // Trigonometry for double helix structure
-                let y1 = centerY + Math.sin(i * frequency + angle) * amplitude;
-                let y2 = centerY + Math.sin(i * frequency + angle + Math.PI) * amplitude;
-                
-                // Scale simulates Z-depth illusion
-                let scale1 = (Math.cos(i * frequency + angle) + 1) / 2;
-                let scale2 = (Math.cos(i * frequency + angle + Math.PI) + 1) / 2;
+                let x1 = Math.cos(angle1) * radius;
+                let z1 = Math.sin(angle1) * radius;
+                let x2 = Math.cos(angle2) * radius;
+                let z2 = Math.sin(angle2) * radius;
 
-                // Pick a pseudo-random but stable base pair
-                let pIdx = Math.floor((i * 17) % 4);
-                let pair = pairs[pIdx];
+                const scale1 = perspective / (perspective + z1);
+                const scale2 = perspective / (perspective + z2);
 
-                // Connecting Hydrogen Bonds
+                const finalX1 = (x1 * Math.cos(mouseX)) * scale1 + width/2;
+                const finalY1 = (y + (x1 * mouseY)) * scale1 + height/2;
+                const finalX2 = (x2 * Math.cos(mouseX)) * scale2 + width/2;
+                const finalY2 = (y + (x2 * mouseY)) * scale2 + height/2;
+
+                const drawNode = (x, y, s, color, letter) => {
+                    ctx.globalAlpha = Math.max(0.2, s - 0.4);
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5 * s + 2, 0, Math.PI * 2);
+                    ctx.fillStyle = color;
+                    ctx.shadowBlur = 15 * s;
+                    ctx.shadowColor = color;
+                    ctx.fill();
+                    
+                    if (s > 0.9) {
+                        ctx.shadowBlur = 0;
+                        ctx.fillStyle = '#020617';
+                        ctx.font = `bold ${7 + s * 4}px var(--font-mono)`;
+                        ctx.textAlign = 'center';
+                        ctx.fillText(letter, x, y + 4);
+                    }
+                };
+
                 ctx.beginPath();
-                ctx.moveTo(i, y1);
-                ctx.lineTo(i, y2);
-                ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 + scale1 * 0.2})`;
-                ctx.lineWidth = 2;
+                ctx.moveTo(finalX1, finalY1);
+                ctx.lineTo(finalX2, finalY2);
+                ctx.strokeStyle = `rgba(255, 255, 255, ${(scale1 + scale2) / 8})`;
+                ctx.lineWidth = 2 * ((scale1 + scale2) / 2);
                 ctx.stroke();
 
-                // Z-Sorting: Draw the molecule that is furthest back first, then the front
-                if (scale1 < scale2) {
-                    drawNode(i, y1, scale1, pair.c1, pair.b1); // Draw Back
-                    drawNode(i, y2, scale2, pair.c2, pair.b2); // Draw Front
+                const p = pairs[Math.abs(Math.floor(y/spacing)) % 2];
+
+                if (z1 > z2) {
+                    drawNode(finalX2, finalY2, scale2, p.c2, p.b2);
+                    drawNode(finalX1, finalY1, scale1, p.c1, p.b1);
                 } else {
-                    drawNode(i, y2, scale2, pair.c2, pair.b2); // Draw Back
-                    drawNode(i, y1, scale1, pair.c1, pair.b1); // Draw Front
+                    drawNode(finalX1, finalY1, scale1, p.c1, p.b1);
+                    drawNode(finalX2, finalY2, scale2, p.c2, p.b2);
                 }
             }
-            angle += 0.03; // Global rotation speed
+            rotation += 0.025;
+            ctx.globalAlpha = 1.0;
             this.dnaAnimationId = requestAnimationFrame(render);
         };
         render();
