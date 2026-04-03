@@ -83,7 +83,7 @@
         #mapTooltip { position: absolute; background: rgba(15,23,42,0.95); border: 1px solid var(--primary); padding: 1rem; border-radius: 8px; font-size: 0.8rem; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 10; backdrop-filter: blur(4px); box-shadow: 0 10px 25px rgba(0,0,0,0.5); text-align: center; }
 
         /* 3D Canvas */
-        #dnaCanvas { width: 100%; height: 350px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1rem; box-shadow: inset 0 0 50px rgba(0,0,0,0.5); }
+        #dnaCanvas { width: 100%; height: 350px; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1rem; box-shadow: inset 0 0 50px rgba(0,0,0,0.5); cursor: crosshair; }
 
         /* --- TABLES & MISC --- */
         .table-container { overflow-x: auto; background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); margin-bottom: 1.5rem; }
@@ -171,13 +171,15 @@
 
         <div id="view-dna" class="view">
             <h2 class="section-title">3D Double Helix Engine</h2>
-            <p class="section-desc">Real-time mathematically generated trigonometric visualization of the DNA backbone using HTML5 Canvas rendering.</p>
+            <p class="section-desc">Real-time mathematically generated trigonometric visualization of ATGC base pairs.</p>
             <canvas id="dnaCanvas"></canvas>
             <div class="card">
-                <div class="card-label">Visualization Metrics</div>
+                <div class="card-label">Nucleotide Base Pairing (ATGC)</div>
                 <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; line-height: 1.6;">
-                    The simulation dynamically calculates sine and cosine waves offset by &pi; (Pi) radians to plot the dual backbones. 
-                    The rendering engine scales the radius and opacity of the nucleotide nodes based on their simulated Z-axis depth to create a 3D illusion without utilizing heavy external WebGL libraries.
+                    The engine now renders dynamic representations of Purine and Pyrimidine structures. 
+                    <strong style="color: #f43f5e;">Adenine (A)</strong> perfectly pairs with <strong style="color: #38bdf8;">Thymine (T)</strong>, 
+                    and <strong style="color: #34d399;">Guanine (G)</strong> pairs with <strong style="color: #fbbf24;">Cytosine (C)</strong>. 
+                    Depth and scale are dynamically updated utilizing Z-axis pseudo-layering algorithms.
                 </p>
             </div>
         </div>
@@ -320,60 +322,87 @@ const bioApp = {
         btn.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
         
         if(viewId === 'source') this.loadSourceCode();
-        if(viewId === 'dna') this.startDNA(); else this.stopDNA(); // Save CPU when not looking at DNA
+        if(viewId === 'dna') this.startDNA(); else this.stopDNA(); 
     },
 
-    // --- CANVAS 3D DNA RENDERER ---
+    // --- ENHANCED CANVAS 3D DNA RENDERER WITH ATGC ---
     startDNA: function() {
-        if(this.dnaAnimationId) return; // already running
+        if(this.dnaAnimationId) return; 
         const canvas = document.getElementById('dnaCanvas');
         const ctx = canvas.getContext('2d');
         let width = canvas.width = canvas.parentElement.clientWidth;
         let height = canvas.height = 350;
         let angle = 0;
 
-        const drawNode = (x, y, scale, color) => {
+        // Base Pair Biological Definitions
+        const pairs = [
+            { b1: 'A', c1: '#f43f5e', b2: 'T', c2: '#38bdf8' }, // A (Red) pairs with T (Blue)
+            { b1: 'T', c1: '#38bdf8', b2: 'A', c2: '#f43f5e' }, // T pairs with A
+            { b1: 'G', c1: '#34d399', b2: 'C', c2: '#fbbf24' }, // G (Green) pairs with C (Yellow)
+            { b1: 'C', c1: '#fbbf24', b2: 'G', c2: '#34d399' }  // C pairs with G
+        ];
+
+        const drawNode = (x, y, scale, color, letter) => {
+            let radius = 4 + scale * 8;
+            
+            // Draw Glowing Molecule
             ctx.beginPath();
-            ctx.arc(x, y, 2 + scale * 5, 0, Math.PI * 2);
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
             ctx.fillStyle = color;
+            ctx.shadowBlur = 15;
+            ctx.shadowColor = color;
             ctx.fill();
+            ctx.shadowBlur = 0; // Reset shadow for text
+
+            // Draw Typography if molecule is in the foreground
+            if (scale > 0.4) {
+                ctx.fillStyle = '#020617'; // Dark background color for text contrast
+                ctx.font = `bold ${8 + scale * 5}px var(--font-mono)`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(letter, x, y);
+            }
         };
 
         const render = () => {
             ctx.clearRect(0, 0, width, height);
             
             let centerY = height / 2;
-            let amplitude = 60;
-            let frequency = 0.02;
-            let spacing = 18;
+            let amplitude = 70; // Width of the helix
+            let frequency = 0.025; // Tightness of the twists
+            let spacing = 28; // Space between base pairs
 
             for (let i = 0; i < width; i += spacing) {
-                // Math for double helix structure
+                // Trigonometry for double helix structure
                 let y1 = centerY + Math.sin(i * frequency + angle) * amplitude;
                 let y2 = centerY + Math.sin(i * frequency + angle + Math.PI) * amplitude;
                 
-                // Scale simulates Z-depth
+                // Scale simulates Z-depth illusion
                 let scale1 = (Math.cos(i * frequency + angle) + 1) / 2;
                 let scale2 = (Math.cos(i * frequency + angle + Math.PI) + 1) / 2;
 
-                // Connecting bonds
+                // Pick a pseudo-random but stable base pair
+                let pIdx = Math.floor((i * 17) % 4);
+                let pair = pairs[pIdx];
+
+                // Connecting Hydrogen Bonds
                 ctx.beginPath();
                 ctx.moveTo(i, y1);
                 ctx.lineTo(i, y2);
-                ctx.strokeStyle = `rgba(56, 189, 248, ${0.1 + scale1 * 0.2})`;
-                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 + scale1 * 0.2})`;
+                ctx.lineWidth = 2;
                 ctx.stroke();
 
-                // Draw back strand first, then front strand for correct overlapping
+                // Z-Sorting: Draw the molecule that is furthest back first, then the front
                 if (scale1 < scale2) {
-                    drawNode(i, y1, scale1, '#818cf8'); // back
-                    drawNode(i, y2, scale2, '#38bdf8'); // front
+                    drawNode(i, y1, scale1, pair.c1, pair.b1); // Draw Back
+                    drawNode(i, y2, scale2, pair.c2, pair.b2); // Draw Front
                 } else {
-                    drawNode(i, y2, scale2, '#38bdf8'); // back
-                    drawNode(i, y1, scale1, '#818cf8'); // front
+                    drawNode(i, y2, scale2, pair.c2, pair.b2); // Draw Back
+                    drawNode(i, y1, scale1, pair.c1, pair.b1); // Draw Front
                 }
             }
-            angle += 0.04; // Rotation speed
+            angle += 0.03; // Global rotation speed
             this.dnaAnimationId = requestAnimationFrame(render);
         };
         render();
@@ -716,7 +745,6 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Handle window resizing for DNA Canvas
 window.addEventListener('resize', () => {
     if(document.getElementById('view-dna').classList.contains('active')) {
         const canvas = document.getElementById('dnaCanvas');
