@@ -24,15 +24,19 @@
         /* --- ACADEMIC SUBMISSION HEADER --- */
         .academic-header { background: linear-gradient(135deg, rgba(15,23,42,0.9), rgba(30,41,59,0.9)); border-bottom: 1px solid var(--border); padding: 1rem; display: flex; justify-content: space-between; align-items: center; backdrop-filter: blur(10px); z-index: 100; }
         .branding h1 { font-size: 1.2rem; font-weight: 800; background: linear-gradient(to right, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .submission-badge { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 12px; border-radius: 8px; font-size: 0.75rem; text-align: right; }
-        .submission-badge strong { color: var(--primary); display: block; font-size: 0.85rem; }
-        .submission-badge span { color: var(--text-muted); }
+        .submission-badge { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); padding: 12px; border-radius: 8px; font-size: 0.75rem; text-align: right; }
+        .submission-badge strong { color: var(--primary); display: block; font-size: 0.85rem; margin-bottom: 2px;}
+        .submission-badge span { color: var(--text-muted); display: block;}
+        
+        /* NEW: PPT Button Styles */
+        .btn-ppt { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 12px; background: rgba(251, 191, 36, 0.15); color: var(--warning); border: 1px solid var(--warning); border-radius: 6px; text-decoration: none; font-size: 0.8rem; font-weight: 700; transition: var(--transition); }
+        .btn-ppt:hover { background: var(--warning); color: #000; transform: translateY(-1px); }
 
-        /* --- CONTROL PANEL --- */
+        /* --- CONTROL PANEL & AUTOCOMPLETE --- */
         .control-panel { background: var(--bg-surface); padding: 1rem; border-bottom: 1px solid var(--border); display: flex; gap: 10px; z-index: 90; position: relative; }
         .search-wrapper { flex: 1; position: relative; }
-        input[type="text"], select { width: 100%; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-sans); font-size: 14px; transition: var(--transition); }
-        input[type="text"]:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
+        input[type="text"] { width: 100%; padding: 12px 16px; background: var(--bg-deep); border: 1px solid var(--border); border-radius: 8px; color: white; font-family: var(--font-sans); font-size: 14px; transition: var(--transition); }
+        input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2); }
         .btn { padding: 12px 24px; background: var(--primary); color: #000; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;}
         .btn:hover { background: #0ea5e9; transform: translateY(-1px); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -60,10 +64,10 @@
         /* --- CARDS & GRIDS --- */
         .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
         .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem;}
-        .card-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; margin-bottom: 8px; display: block;}
+        .card-label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; }
         .card-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); margin-top: 0.5rem; font-family: var(--font-mono); }
 
-        /* PATHOLOGY SPECIFIC STYLES */
+        /* PATHOLOGY STYLES */
         .pathology-alert { padding: 1rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid transparent; }
         .pathology-alert.negative { background: rgba(52, 211, 153, 0.1); border-left-color: var(--success); }
         .pathology-alert.positive { background: rgba(244, 63, 94, 0.1); border-left-color: var(--danger); }
@@ -86,6 +90,9 @@
         th { background: rgba(0,0,0,0.2); color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; }
         .mono { font-family: var(--font-mono); }
         .seq-box { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; font-family: var(--font-mono); font-size: 11px; color: var(--secondary); max-height: 250px; overflow-y: auto; word-break: break-all; line-height: 1.6; }
+        .paper-item { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .paper-title { color: var(--primary); font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
+        .paper-meta { color: var(--text-muted); font-size: 0.8rem; }
 
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -94,7 +101,6 @@
             .submission-badge { text-align: left; width: 100%; }
             .control-panel { flex-direction: column; }
             .btn { width: 100%; }
-            .grid-stats { grid-template-columns: 1fr 1fr; }
         }
     </style>
 </head>
@@ -108,12 +114,16 @@
         <div class="submission-badge">
             <strong>Dev: Sahil Setia</strong>
             <span>B.Tech 2nd Year | Submitted to: Mr. Pranshu Dangwal</span>
+            <br>
+            <a href="https://drive.google.com/file/d/1grJcfBRee6IBZOwv84s6cbHvnZ86T2D2/view?usp=sharing" target="_blank" class="btn-ppt">
+                📊 View Project Presentation
+            </a>
         </div>
     </header>
 
     <div class="control-panel">
         <div class="search-wrapper">
-            <input type="text" id="accessionInput" placeholder="Search Accession ID or Name (e.g. NC_002377, NC_002575)" autocomplete="off" oninput="bioApp.debounceHints(this.value)">
+            <input type="text" id="accessionInput" placeholder="Search Accession ID or Name (e.g. NC_002377)" autocomplete="off" oninput="bioApp.debounceHints(this.value)">
             <div id="autocompleteBox" class="autocomplete-dropdown"></div>
         </div>
         <button id="runBtn" class="btn" onclick="bioApp.runPipeline()">Analyze</button>
@@ -124,10 +134,10 @@
             <div class="nav-item active" onclick="bioApp.switchTab('dashboard', this)">Overview</div>
             <div class="nav-item" onclick="bioApp.switchTab('pathology', this)">🦠 Pathology</div>
             <div class="nav-item" onclick="bioApp.switchTab('map', this)">🗺️ Map</div>
-            <div class="nav-item" onclick="bioApp.switchTab('cloning', this)">🧬 Virtual Cloning</div>
             <div class="nav-item" onclick="bioApp.switchTab('dogma', this)">Central Dogma</div>
             <div class="nav-item" onclick="bioApp.switchTab('epigenetics', this)">Epigenetics</div>
             <div class="nav-item" onclick="bioApp.switchTab('tools', this)">Thermodynamics</div>
+            <div class="nav-item" onclick="bioApp.switchTab('literature', this)">📚 Literature</div>
         </div>
     </div>
 
@@ -145,7 +155,7 @@
             </div>
 
             <div class="card">
-                <span class="card-label">NCBI Record Metadata</span>
+                <div class="card-label" style="margin-bottom: 10px;">NCBI Record Metadata</div>
                 <div style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.8;">
                     <div><strong style="color: white;">Accession ID:</strong> <span id="meta-acc" class="mono">---</span></div>
                     <div><strong style="color: white;">Definition:</strong> <span id="meta-def">---</span></div>
@@ -163,7 +173,7 @@
             </div>
 
             <div class="card" style="margin-top: 2rem;">
-                <span class="card-label">Diagnostic Biomarkers</span>
+                <div class="card-label">Diagnostic Biomarkers</div>
                 <ul style="font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; margin-left: 20px; line-height: 1.6;">
                     <li><strong>Crown Gall (Ti Plasmid):</strong> Detects presence of <i>ipt</i> (isopentenyl transferase) and <i>virD2</i> markers.</li>
                     <li><strong>Hairy Root (Ri Plasmid):</strong> Detects presence of <i>rolB</i> and <i>rolC</i> (root locus) markers.</li>
@@ -173,6 +183,7 @@
 
         <div id="view-map" class="view">
             <h2 class="section-title">Interactive Sequence Map</h2>
+            <p class="section-desc">Circular topological visualization of identified Open Reading Frames (ORFs).</p>
             <div class="map-container">
                 <svg id="plasmidSvg" viewBox="0 0 500 500">
                     <circle cx="250" cy="250" r="200" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="20"/>
@@ -187,53 +198,9 @@
             </div>
         </div>
 
-        <div id="view-cloning" class="view">
-            <h2 class="section-title">Virtual Cloning Lab</h2>
-            <p class="section-desc">Simulate restriction digestion and ligation to create a recombinant plasmid.</p>
-            
-            <div class="card">
-                <span class="card-label" style="color: var(--primary);">1. Select Vector Backbone</span>
-                <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">
-                    Currently loaded sequence (<span id="cloneVectorName" class="mono">---</span>) will be used as the backbone.
-                </div>
-
-                <span class="card-label" style="color: var(--success);">2. Select Insert (Gene of Interest)</span>
-                <select id="cloneInsert" style="margin-bottom: 1rem;">
-                    <option value="">-- Load sequence to view available genes --</option>
-                </select>
-
-                <span class="card-label" style="color: var(--warning);">3. Select Restriction Enzymes</span>
-                <div style="display: flex; gap: 10px; margin-bottom: 1.5rem;">
-                    <select id="cloneE1" style="flex: 1;">
-                        <option value="">-- 5' End Enzyme --</option>
-                        <option value="GAATTC">EcoRI (GAATTC)</option>
-                        <option value="GGATCC">BamHI (GGATCC)</option>
-                        <option value="AAGCTT">HindIII (AAGCTT)</option>
-                    </select>
-                    <select id="cloneE2" style="flex: 1;">
-                        <option value="">-- 3' End Enzyme --</option>
-                        <option value="GAATTC">EcoRI (GAATTC)</option>
-                        <option value="GGATCC">BamHI (GGATCC)</option>
-                        <option value="AAGCTT">HindIII (AAGCTT)</option>
-                    </select>
-                </div>
-
-                <button class="btn" style="width: 100%;" onclick="bioApp.simulateCloning()">Simulate Ligation</button>
-            </div>
-
-            <div id="cloneResultCard" class="card" style="display: none; border-color: var(--success);">
-                <span class="card-label" style="color: var(--success);">Recombinant Plasmid Generated</span>
-                <div class="grid-stats" style="margin-top: 1rem; margin-bottom: 1rem;">
-                    <div><div class="card-label">New Size</div><div id="cloneResSize" class="card-value" style="font-size: 1.2rem;">0 kb</div></div>
-                    <div><div class="card-label">New GC%</div><div id="cloneResGc" class="card-value" style="font-size: 1.2rem;">0%</div></div>
-                </div>
-                <span class="card-label">Construct Preview (Top 500bp)</span>
-                <div id="cloneResSeq" class="seq-box" style="margin-top: 0.5rem; color: var(--text-main);"></div>
-            </div>
-        </div>
-
         <div id="view-dogma" class="view">
             <h2 class="section-title">Central Dogma Engine</h2>
+            <p class="section-desc">In-silico transcription to mRNA and translation to Polypeptides.</p>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Gene ID</th><th>Coordinates</th><th>Protein Length</th><th>Est. Mass</th></tr></thead>
@@ -244,6 +211,7 @@
 
         <div id="view-epigenetics" class="view">
             <h2 class="section-title">Epigenetic CpG Mapper</h2>
+            <p class="section-desc">Identifies Cytosine-Guanine dinucleotide clusters for methylation prediction.</p>
             <div class="table-container">
                 <table>
                     <thead><tr><th>Island #</th><th>Start (bp)</th><th>End (bp)</th><th>Density</th></tr></thead>
@@ -254,20 +222,34 @@
 
         <div id="view-tools" class="view">
             <h2 class="section-title">Oligo Thermodynamics</h2>
+            <p class="section-desc">Extracts terminal sequences and calculates Melting Temperature (Tm) for PCR primers.</p>
             <select id="primerSelect" style="width: 100%; padding: 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; color: white; margin-bottom: 1.5rem;" onchange="bioApp.calculatePrimers()">
                 <option value="">-- Select Gene Target --</option>
             </select>
+
             <div id="primerResults" style="display: none; gap: 1rem; flex-direction: column;">
                 <div class="card" style="border-left: 4px solid var(--primary);">
                     <div class="card-label" style="color: var(--primary);">Forward Primer (5' → 3')</div>
                     <div id="fwdSeq" class="mono" style="font-size: 1.1rem; margin: 10px 0;">---</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;"><span>Len: 20bp</span><span id="fwdGc">GC: 0%</span><strong id="fwdTm" style="color: var(--warning);">Tm: 0°C</strong></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;">
+                        <span>Len: 20bp</span><span id="fwdGc">GC: 0%</span><strong id="fwdTm" style="color: var(--warning);">Tm: 0°C</strong>
+                    </div>
                 </div>
                 <div class="card" style="border-left: 4px solid var(--success);">
                     <div class="card-label" style="color: var(--success);">Reverse Primer (5' → 3')</div>
                     <div id="revSeq" class="mono" style="font-size: 1.1rem; margin: 10px 0;">---</div>
-                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;"><span>Len: 20bp</span><span id="revGc">GC: 0%</span><strong id="revTm" style="color: var(--warning);">Tm: 0°C</strong></div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 15px;">
+                        <span>Len: 20bp</span><span id="revGc">GC: 0%</span><strong id="revTm" style="color: var(--warning);">Tm: 0°C</strong>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <div id="view-literature" class="view">
+            <h2 class="section-title">PubMed Literature Match</h2>
+            <p class="section-desc">Recent published research papers related to the sequenced organism.</p>
+            <div class="card" id="papersContainer">
+                <div style="text-align: center; color: var(--text-muted); padding: 2rem 0;">Run pipeline to fetch literature...</div>
             </div>
         </div>
 
@@ -360,8 +342,6 @@ const bioApp = {
 
     runPipeline: async function() {
         document.getElementById('autocompleteBox').style.display = 'none';
-        document.getElementById('cloneResultCard').style.display = 'none'; // reset cloning tab
-        
         let input = document.getElementById('accessionInput').value.trim();
         if(!input) return alert("Search term required.");
         
@@ -397,8 +377,9 @@ const bioApp = {
             this.computeStats();
             this.findORFsAndTranslate();
             this.mapCpGIslands();
-            this.detectPathogens(); 
+            this.detectPathogens();
             
+            this.fetchLiterature(this.data.metadata.organism || this.data.metadata.title);
             this.updateDOM();
             this.setStatus("Pipeline execution completed.");
         } catch (err) {
@@ -479,42 +460,41 @@ const bioApp = {
         if(scan(this.pathologyMarkers.hairyRoot.markers)) this.data.pathology.hairyRoot = true;
     },
 
-    // --- NEW: VIRTUAL CLONING SIMULATOR ---
-    simulateCloning: function() {
-        let e1 = document.getElementById('cloneE1').value;
-        let e2 = document.getElementById('cloneE2').value;
-        let orfIdx = document.getElementById('cloneInsert').value;
+    fetchLiterature: async function(queryTerm) {
+        const container = document.getElementById('papersContainer');
+        if(!queryTerm) return container.innerHTML = '<div style="color:var(--text-muted)">Insufficient data to find literature.</div>';
         
-        if(orfIdx === "" || e1 === "" || e2 === "") return alert("Please select an Insert and both Restriction Enzymes.");
+        container.innerHTML = '<div style="text-align:center; color:var(--warning);">Querying PubMed Database...</div>';
+        
+        try {
+            let res = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term=${queryTerm}&retmax=5&retmode=json&api_key=${API_KEY}`);
+            let data = await res.json();
+            
+            if(!data.esearchresult || data.esearchresult.idlist.length === 0) {
+                return container.innerHTML = '<div style="color:var(--text-muted)">No recent publications found for this specific organism.</div>';
+            }
 
-        let seq = this.data.sequence;
-        let insertDna = this.data.orfs[orfIdx].dna;
-
-        // Find cut sites in vector
-        let cut1 = seq.indexOf(e1);
-        let cut2 = seq.indexOf(e2, cut1 + 1);
-
-        if(cut1 === -1 || cut2 === -1) {
-            return alert("Digestion Failed: One or both of those enzyme restriction sites were not found in the Vector backbone.");
+            let uids = data.esearchresult.idlist.join(',');
+            let sumRes = await fetch(`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=${uids}&retmode=json&api_key=${API_KEY}`);
+            let sumData = await sumRes.json();
+            
+            container.innerHTML = '';
+            data.esearchresult.idlist.forEach(id => {
+                let paper = sumData.result[id];
+                let div = document.createElement('div');
+                div.className = 'paper-item';
+                div.innerHTML = `
+                    <div class="paper-title"><a href="https://pubmed.ncbi.nlm.nih.gov/${id}/" target="_blank" style="color:var(--primary); text-decoration:none;">${paper.title}</a></div>
+                    <div class="paper-meta">
+                        ${paper.authors ? paper.authors.map(a => a.name).join(', ') : 'Unknown Authors'} <br>
+                        <strong>${paper.source}</strong> | Published: ${paper.pubdate}
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        } catch (e) {
+            container.innerHTML = '<div style="color:var(--danger)">Failed to load literature from PubMed.</div>';
         }
-
-        // Ligate: Plasmid start -> E1 cut -> Insert -> E2 cut -> Plasmid end
-        // Simplified sticky end simulation by retaining half the enzyme site
-        let recombinant = seq.substring(0, cut1) + e1.substring(0, 3) + insertDna + e2.substring(3) + seq.substring(cut2 + e2.length);
-
-        // Compute stats for new plasmid
-        let rGc = 0; for(let c of recombinant) if(c==='G'||c==='C') rGc++;
-        let rGcPercent = ((rGc / recombinant.length) * 100).toFixed(1);
-
-        document.getElementById('cloneResSize').textContent = (recombinant.length / 1000).toFixed(2) + " kb";
-        document.getElementById('cloneResGc').textContent = rGcPercent + "%";
-        
-        // Show sequence with the insert highlighted
-        let preview = recombinant.substring(0, 500);
-        document.getElementById('cloneResSeq').textContent = preview + "... [SEQUENCE TRUNCATED]";
-        
-        document.getElementById('cloneResultCard').style.display = 'block';
-        alert("Success! Recombinant Plasmid created.");
     },
 
     calculatePrimers: function() {
@@ -594,38 +574,27 @@ const bioApp = {
                 <div class="path-title">${title}<span class="badge ${isPos ? 'pos' : 'neg'}">${isPos ? 'DETECTED' : 'CLEAR'}</span></div>
                 <div style="font-size:0.85rem; color:var(--text-muted);">${desc}</div>
             </div>`;
-        pathRes.innerHTML += renderAlert("Crown Gall Disease", "Scanned for Ti Plasmid markers.", this.data.pathology.crownGall);
-        pathRes.innerHTML += renderAlert("Hairy Root Disease", "Scanned for Ri Plasmid markers.", this.data.pathology.hairyRoot);
+        pathRes.innerHTML += renderAlert("Crown Gall Disease", "Scanned for Ti Plasmid markers (ipt, virD2).", this.data.pathology.crownGall);
+        pathRes.innerHTML += renderAlert("Hairy Root Disease", "Scanned for Ri Plasmid markers (rolB, rolC).", this.data.pathology.hairyRoot);
 
-        // Tables & Dropdowns
         const orfTbody = document.getElementById('orfTable');
         const primerSel = document.getElementById('primerSelect');
-        const cloneInsertSel = document.getElementById('cloneInsert');
-        
-        orfTbody.innerHTML = ''; 
-        primerSel.innerHTML = '<option value="">-- Select Gene Target --</option>';
-        cloneInsertSel.innerHTML = '<option value="">-- Select Gene to Insert --</option>';
-
-        // Set Vector Name in Cloning Tab
-        document.getElementById('cloneVectorName').textContent = this.data.accession;
+        orfTbody.innerHTML = ''; primerSel.innerHTML = '<option value="">-- Select Gene Target --</option>';
 
         this.data.orfs.slice(0, 15).forEach((orf, i) => {
-            // Dogma Table
             let tr = document.createElement('tr');
             tr.innerHTML = `<td class="mono" style="color:var(--primary);">${orf.id}</td><td class="mono">${orf.start} - ${orf.stop}</td><td>${orf.protein.length} aa</td><td>~${orf.mw} kDa</td>`;
             orfTbody.appendChild(tr);
             
-            // Primer & Cloning Dropdowns
             let opt = document.createElement('option');
             opt.value = i; opt.textContent = `${orf.id} (${orf.dna.length} bp)`;
-            primerSel.appendChild(opt.cloneNode(true));
-            cloneInsertSel.appendChild(opt);
+            primerSel.appendChild(opt);
         });
 
-        // Epigenetics
         const cpgTbody = document.getElementById('cpgTable');
         cpgTbody.innerHTML = '';
         if(this.data.cpgIslands.length === 0) cpgTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No CpG islands detected.</td></tr>';
+        
         this.data.cpgIslands.slice(0, 15).forEach((isl, i) => {
             let tr = document.createElement('tr');
             tr.innerHTML = `<td>Isl_${i+1}</td><td class="mono">${isl.start}</td><td class="mono">${isl.end}</td><td style="color:var(--success);">${isl.density}</td>`;
